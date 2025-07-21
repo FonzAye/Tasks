@@ -1,3 +1,7 @@
+output "vpc_ids_by_name" {
+  description = "Map of VPC keys to their IDs"
+  value       = { for name, vpc in aws_vpc.terraform : name => vpc.id }
+}
 
 output "test" {
   value = local.test

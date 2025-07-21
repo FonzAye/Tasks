@@ -24,3 +24,10 @@ module "database" {
   dbs = local.config.databases
   subnets = module.network.subnets
 }
+
+module "security_groups" {
+  source           = "./modules/security-groups"
+  security_groups  = local.config.security_groups
+  networks_by_name = local.networks_by_name
+  vpc_ids_by_name  = module.network.vpc_ids_by_name
+}

@@ -52,5 +52,26 @@
       "port": 5432,
       "security_groups": ["db-sg"]
     }
+  ],
+
+  "security_groups": [
+    {
+      "name": "test-sg",
+      "vpc": "tf-vpc",
+      "attach_to": ["reverse-proxy"],
+      "description": "test",
+      "ingress": [
+        { "protocol": "tcp", "port": 80, "source": "public" }
+      ],
+      "egress": [
+        { "protocol": "tcp", "port": 80, "destination": "public" },
+        { "protocol": "udp", "port": 53, "destination": "public" }
+      ]
+    }
+  ],
+
+  "networks": [
+    { "name": "public", "cidr": "0.0.0.0/0" },
+    { "name": "internal", "cidr": "10.0.0.0/16" }
   ]
 }

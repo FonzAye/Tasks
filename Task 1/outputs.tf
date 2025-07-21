@@ -18,6 +18,6 @@
 #   value = module.network.aws_subnets
 # }
 
-output "db_subnet_ids" {
-  value = module.database.db_subnet_ids
-}
+# output "db_subnet_ids" {
+#   value = module.database.db_subnet_ids
+# }
