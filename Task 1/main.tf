@@ -19,13 +19,13 @@ module "network" {
   create_nat_gateway = false
 }
 
-module "database" {
-  source = "./modules/database"
+# module "database" {
+#   source = "./modules/database"
 
-  dbs = local.config.databases
-  subnets = module.network.subnets
-  sg_ids_by_name = module.security_groups.sg_ids_by_name
-}
+#   dbs = local.config.databases
+#   subnets = module.network.subnets
+#   sg_ids_by_name = module.security_groups.sg_ids_by_name
+# }
 
 module "security_groups" {
   source           = "./modules/security-groups"
@@ -42,3 +42,9 @@ module "security_groups" {
 #   private_subnets = module.network.private_subnets
 #   sg_ids_by_name = module.security_groups.sg_ids_by_name
 # }
+
+module "asg" {
+  source = "./modules/autoscaling-groups"
+
+  sg_ids_by_name = module.security_groups.sg_ids_by_name
+}

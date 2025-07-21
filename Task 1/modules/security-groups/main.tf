@@ -22,8 +22,8 @@ resource "aws_vpc_security_group_ingress_rule" "all" {
   }
 
   security_group_id = aws_security_group.all[each.value.sg_name].id
-  from_port         = each.value.port
-  to_port           = each.value.port
+  from_port         = each.value.protocol == "-1" ? null : each.value.port
+  to_port           = each.value.protocol == "-1" ? null : each.value.port
   ip_protocol       = each.value.protocol
 
   cidr_ipv4 = contains(keys(var.networks_by_name), each.value.source) ? var.networks_by_name[each.value.source] : null
@@ -47,8 +47,8 @@ resource "aws_vpc_security_group_egress_rule" "all" {
   }
 
   security_group_id = aws_security_group.all[each.value.sg_name].id
-  from_port         = each.value.port
-  to_port           = each.value.port
+  from_port         = each.value.protocol == "-1" ? null : each.value.port
+  to_port           = each.value.protocol == "-1" ? null : each.value.port
   ip_protocol       = each.value.protocol
 
   cidr_ipv4 = contains(keys(var.networks_by_name), each.value.destination) ? var.networks_by_name[each.value.destination] : null
