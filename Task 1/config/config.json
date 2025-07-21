@@ -36,5 +36,21 @@
         }
       ]
     }
+  ],
+
+  "databases": [
+    {
+      "name": "maindb",
+      "network": "main",
+      "engine": "mysql",
+      "engine_version": "8.0",
+      "parameter_group_name": "default.mysql8.0",
+      "instance_class": "db.t3.micro",
+      "allocated_storage": 20,
+      "zone": ["eu-central-1a", "eu-central-1b"],
+      "subnets": ["database-subnet-a", "database-subnet-b"],
+      "port": 5432,
+      "security_groups": ["db-sg"]
+    }
   ]
 }

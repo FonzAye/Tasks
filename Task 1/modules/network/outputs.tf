@@ -1,6 +1,3 @@
-output "subnets" {
-  value = local.public_subnets
-}
 
 output "test" {
   value = local.test
@@ -8,4 +5,12 @@ output "test" {
 
 output "vpcs" {
   value = local.vpcs
+}
+
+output "aws_subnets" {
+  value = aws_subnet.subnets
+}
+
+output "subnets" {
+  value = aws_subnet.subnets
 }

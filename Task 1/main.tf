@@ -17,3 +17,10 @@ module "network" {
   region = "eu-central-1"
   vpcs   = local.config.network
 }
+
+module "database" {
+  source = "./modules/database"
+
+  dbs = local.config.databases
+  subnets = module.network.subnets
+}

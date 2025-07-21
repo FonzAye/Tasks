@@ -36,6 +36,12 @@ locals {
     name => subnet 
     if can(regex("private", name))
   }
+
+  database_subnets = {
+    for name, subnet in local.subnets : 
+    name => subnet 
+    if can(regex("database", name))
+  }
 }
 
 # Internet Gateway
@@ -50,7 +56,7 @@ resource "aws_internet_gateway" "gw" {
 
 # NAt Gateway
 resource "aws_eip" "nat" {
-  for_each = length(local.private_subnets) > 0 ? local.vpcs : null
+  for_each = length(local.private_subnets) > 0 && var.create_nat_gateway ? local.vpcs : {}
 
   domain     = "vpc"
   tags = {
@@ -61,7 +67,7 @@ resource "aws_eip" "nat" {
 }
 
 resource "aws_nat_gateway" "nt" {
-  for_each = length(local.private_subnets) > 0 ? local.vpcs : null
+  for_each = length(local.private_subnets) > 0 && var.create_nat_gateway ? local.vpcs : {}
 
   allocation_id = aws_eip.nat[each.key].id
   subnet_id     = aws_subnet.subnets[local.first_public_subnet].id
@@ -104,19 +110,42 @@ resource "aws_route_table_association" "public" {
 
 # Private RT
 resource "aws_route_table" "private" {
+  for_each = length(local.private_subnets) > 0 ? local.vpcs : {}
+
+  vpc_id = aws_vpc.terraform[each.key].id
+  tags = { Name = "${each.value.name}-private-rt" }
+}
+
+resource "aws_route" "private_nat" {
+  for_each = length(local.private_subnets) > 0 && var.create_nat_gateway ? local.vpcs : {}
+
+  route_table_id         = aws_route_table.private[each.key].id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.nt[each.key].id
+}
+
+resource "aws_route_table_association" "private" {
+  for_each = length(local.private_subnets) > 0 ? local.private_subnets : {}
+
+  subnet_id      = aws_subnet.subnets[each.key].id
+  route_table_id = aws_route_table.private[each.value.vpc_name].id
+}
+
+# Database RT
+resource "aws_route_table" "database" {
   for_each = local.vpcs
 
   vpc_id = aws_vpc.terraform[each.key].id
   route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nt[each.key].id
+    cidr_block     = each.value.vpc_cidr_block
+    gateway_id = "local"
   }
-  tags = { Name = "${each.value.name}-private-rt" }
+  tags = { Name = "${each.value.name}-database-rt" }
 }
 
-resource "aws_route_table_association" "private" {
-  for_each = local.private_subnets
+resource "aws_route_table_association" "database" {
+  for_each = local.database_subnets
 
   subnet_id      = aws_subnet.subnets[each.key].id
-  route_table_id = aws_route_table.private[each.value.vpc_name].id
+  route_table_id = aws_route_table.database[each.value.vpc_name].id
 }
