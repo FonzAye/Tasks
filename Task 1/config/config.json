@@ -58,7 +58,6 @@
     {
       "name": "test-sg",
       "vpc": "tf-vpc",
-      "attach_to": ["reverse-proxy"],
       "description": "test",
       "ingress": [
         { "protocol": "tcp", "port": 80, "source": "public" }
