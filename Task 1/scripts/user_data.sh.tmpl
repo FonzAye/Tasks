@@ -1,0 +1,18 @@
+#!/bin/bash
+sudo yum update -y
+sudo yum install -y amazon-efs-utils
+
+# create mount point
+sudo mkdir -p /var/www
+
+# mount it
+sudo mount -t efs -o iam,tls ${efs_id}:/ /var/www
+
+# add to /etc/fstab so it remounts on reboot
+echo "${efs_id}:/ /var/www efs defaults,_netdev 0 0" >> /etc/fstab
+
+# add repo with mysql
+sudo dnf -y localinstall https://dev.mysql.com/get/mysql80-community-release-el9-4.noarch.rpm
+
+# install mysql
+sudo dnf -y install mysql mysql-community-client

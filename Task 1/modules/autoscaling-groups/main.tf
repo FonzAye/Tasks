@@ -3,7 +3,9 @@ resource "aws_launch_template" "foobar" {
   image_id               = "ami-0af9b40b1a16fe700"
   instance_type          = "t2.micro"
   vpc_security_group_ids = values(var.sg_ids_by_name)
-#   user_data              = filebase64("")
+  user_data = base64encode(templatefile("${path.root}/scripts/user_data.sh.tmpl", {
+    efs_id = module.efs.id
+  }))
 }
 
 resource "aws_autoscaling_group" "bar" {
