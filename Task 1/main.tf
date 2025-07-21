@@ -16,6 +16,7 @@ module "network" {
 
   region = "eu-central-1"
   vpcs   = local.config.network
+  create_nat_gateway = false
 }
 
 module "database" {
