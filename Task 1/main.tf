@@ -35,16 +35,17 @@ module "security_groups" {
   vpc_ids_by_name  = module.network.vpc_ids_by_name
 }
 
-# module "efs" {
-#   source = "./modules/efs"
+module "efs" {
+  source = "./modules/efs"
 
-#   efs = local.config.efs
-#   private_subnets = module.network.private_subnets
-#   sg_ids_by_name = module.security_groups.sg_ids_by_name
-# }
-
-module "asg" {
-  source = "./modules/autoscaling-groups"
-
+  efs = local.config.efs
+  private_subnets = module.network.private_subnets
   sg_ids_by_name = module.security_groups.sg_ids_by_name
 }
+
+# module "asg" {
+#   source = "./modules/autoscaling-groups"
+
+#   sg_ids_by_name = module.security_groups.sg_ids_by_name
+#   efs_ids_by_name = module.efs.efs_ids_by_name
+# }

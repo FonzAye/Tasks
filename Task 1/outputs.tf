@@ -25,3 +25,7 @@
 # output "mount_targets" {
 #   value = module.efs.mount_targets
 # }
+
+output "efs_ids_by_name" {
+  value = module.efs.efs_ids_by_name
+}

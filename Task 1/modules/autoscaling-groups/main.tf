@@ -4,7 +4,7 @@ resource "aws_launch_template" "foobar" {
   instance_type          = "t2.micro"
   vpc_security_group_ids = values(var.sg_ids_by_name)
   user_data = base64encode(templatefile("${path.root}/scripts/user_data.sh.tmpl", {
-    efs_id = module.efs.id
+    efs_id = values(var.efs_ids_by_name)
   }))
 }
 
@@ -19,5 +19,13 @@ resource "aws_autoscaling_group" "bar" {
   launch_template {
     id      = aws_launch_template.foobar.id
     version = "$Latest"
+  }
+
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
+    triggers = ["tag"]
   }
 }
