@@ -10,8 +10,6 @@ locals {
       ]
     ]) : subnet.name => subnet
   }
-
-  test = {for k, v in local.vpcs : k => v}
 }
 
 resource "aws_vpc" "terraform" {

@@ -9,9 +9,9 @@ locals {
       engine_version         = db.engine_version
       port                   = db.port
       allocated_storage      = db.allocated_storage
-      instance_class         = db.allocated_storage
+      instance_class         = db.instance_class
       availability_zone      = db.zone
-      vpc_security_group_ids = db.security_groups
+      security_groups = db.security_groups
       tags                   = { Name : db.name }
     }
   }
@@ -53,9 +53,9 @@ resource "aws_db_instance" "database" {
   skip_final_snapshot  = true
   port                 = each.value.port
   db_subnet_group_name = aws_db_subnet_group.my_db[each.key].name
-  # vpc_security_group_ids = [
-  #   for key in each.value.vpc_security_group_ids : var.vpc_security_group_ids[key]
-  # ]
+  vpc_security_group_ids = [
+    for key in each.value.security_groups : var.sg_ids_by_name[key]
+  ]
 
   tags = each.value.tags
 }
@@ -65,6 +65,6 @@ resource "aws_db_instance" "database" {
 resource "aws_db_parameter_group" "db" {
   for_each = local.dbs
 
-  name   = "${each.value.engine}${each.value.engine_version}-parameters"
+  name   = "${each.value.engine}-${replace(each.value.engine_version, ".", "")}-parameters"
   family = "${each.value.engine}${each.value.engine_version}"
 }

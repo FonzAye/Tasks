@@ -3,10 +3,6 @@ output "vpc_ids_by_name" {
   value       = { for name, vpc in aws_vpc.terraform : name => vpc.id }
 }
 
-output "test" {
-  value = local.test
-}
-
 output "vpcs" {
   value = local.vpcs
 }
@@ -17,4 +13,12 @@ output "aws_subnets" {
 
 output "subnets" {
   value = aws_subnet.subnets
+}
+
+output "private_subnets" {
+  value = {
+    for name, subnet in aws_subnet.subnets : 
+    name => subnet.id
+    if can(regex("private", name))
+  }
 }

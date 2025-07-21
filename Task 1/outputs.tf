@@ -14,10 +14,14 @@
 #   value = module.network.vpcs
 # }
 
-# output "aws_subnets" {
-#   value = module.network.aws_subnets
+# output "private_subnets" {
+#   value = module.network.private_subnets
 # }
 
 # output "db_subnet_ids" {
 #   value = module.database.db_subnet_ids
+# }
+
+# output "mount_targets" {
+#   value = module.efs.mount_targets
 # }

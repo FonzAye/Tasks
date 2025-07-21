@@ -24,11 +24,21 @@ module "database" {
 
   dbs = local.config.databases
   subnets = module.network.subnets
+  sg_ids_by_name = module.security_groups.sg_ids_by_name
 }
 
 module "security_groups" {
   source           = "./modules/security-groups"
+
   security_groups  = local.config.security_groups
   networks_by_name = local.networks_by_name
   vpc_ids_by_name  = module.network.vpc_ids_by_name
 }
+
+# module "efs" {
+#   source = "./modules/efs"
+
+#   efs = local.config.efs
+#   private_subnets = module.network.private_subnets
+#   sg_ids_by_name = module.security_groups.sg_ids_by_name
+# }

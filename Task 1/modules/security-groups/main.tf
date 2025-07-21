@@ -18,7 +18,7 @@ resource "aws_vpc_security_group_ingress_rule" "all" {
           source   = rule.source
         }
       ]
-    ]) : "${item.sg_name}-${item.protocol}-${item.port}-${item.source}" => item
+    ]) : "${item.sg_name}-${item.protocol}-${item.protocol == "-1" ? "" : item.port}-${item.source}" => item // to make all ports accessible
   }
 
   security_group_id = aws_security_group.all[each.value.sg_name].id
@@ -43,7 +43,7 @@ resource "aws_vpc_security_group_egress_rule" "all" {
           destination = rule.destination
         }
       ]
-    ]) : "${item.sg_name}-${item.protocol}-${item.port == null ? "" : item.port}-${item.destination}" => item // to make all ports accessible
+    ]) : "${item.sg_name}-${item.protocol}-${item.protocol == "-1" ? "" : item.port}-${item.destination}" => item // to make all ports accessible
   }
 
   security_group_id = aws_security_group.all[each.value.sg_name].id
