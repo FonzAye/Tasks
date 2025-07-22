@@ -4,7 +4,7 @@ resource "aws_launch_template" "foobar" {
   instance_type          = "t2.micro"
   vpc_security_group_ids = values(var.sg_ids_by_name)
   user_data = base64encode(templatefile("${path.root}/scripts/user_data.sh.tmpl", {
-    efs_id = values(var.efs_ids_by_name)
+    efs_id = var.efs_ids_by_name["my_efs"]
   }))
 }
 
@@ -14,7 +14,7 @@ resource "aws_autoscaling_group" "bar" {
   max_size            = 1
   min_size            = 1
   force_delete        = true
-  vpc_zone_identifier = ["subnet-0bd41f3a69d62066c", "subnet-05271ab60a8358dde"]
+  vpc_zone_identifier = ["subnet-0867b91bb7d9f3ab4", "subnet-0f7e5eeadac64c75a"]
 
   launch_template {
     id      = aws_launch_template.foobar.id

@@ -8,14 +8,14 @@ terraform {
 }
 
 provider "aws" {
-  region  = "eu-central-1"
+  region = "eu-central-1"
 }
 
 module "network" {
   source = "./modules/network"
 
-  region = "eu-central-1"
-  vpcs   = local.config.network
+  region             = "eu-central-1"
+  vpcs               = local.config.network
   create_nat_gateway = false
 }
 
@@ -28,7 +28,7 @@ module "network" {
 # }
 
 module "security_groups" {
-  source           = "./modules/security-groups"
+  source = "./modules/security-groups"
 
   security_groups  = local.config.security_groups
   networks_by_name = local.networks_by_name
@@ -38,14 +38,14 @@ module "security_groups" {
 module "efs" {
   source = "./modules/efs"
 
-  efs = local.config.efs
+  efs             = local.config.efs
   private_subnets = module.network.private_subnets
-  sg_ids_by_name = module.security_groups.sg_ids_by_name
+  sg_ids_by_name  = module.security_groups.sg_ids_by_name
 }
 
-# module "asg" {
-#   source = "./modules/autoscaling-groups"
+module "asg" {
+  source = "./modules/autoscaling-groups"
 
-#   sg_ids_by_name = module.security_groups.sg_ids_by_name
-#   efs_ids_by_name = module.efs.efs_ids_by_name
-# }
+  sg_ids_by_name  = module.security_groups.sg_ids_by_name
+  efs_ids_by_name = module.efs.efs_ids_by_name
+}
