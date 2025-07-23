@@ -19,13 +19,14 @@ module "network" {
   create_nat_gateway = false
 }
 
-# module "database" {
-#   source = "./modules/database"
+module "database" {
+  source = "./modules/database"
 
-#   dbs = local.config.databases
-#   subnets = module.network.subnets
-#   sg_ids_by_name = module.security_groups.sg_ids_by_name
-# }
+  dbs            = local.config.databases
+  subnets        = module.network.subnets
+  sg_ids_by_name = module.security_groups.sg_ids_by_name
+  depends_on     = [module.network, module.security_groups]
+}
 
 module "security_groups" {
   source = "./modules/security-groups"
@@ -38,9 +39,10 @@ module "security_groups" {
 module "efs" {
   source = "./modules/efs"
 
-  efs             = local.config.efs
-  private_subnets = module.network.private_subnets
-  sg_ids_by_name  = module.security_groups.sg_ids_by_name
+  efs            = local.config.efs
+  subnets        = module.network.subnets
+  sg_ids_by_name = module.security_groups.sg_ids_by_name
+  depends_on     = [module.network, module.security_groups]
 }
 
 module "asg" {
@@ -48,4 +50,7 @@ module "asg" {
 
   sg_ids_by_name  = module.security_groups.sg_ids_by_name
   efs_ids_by_name = module.efs.efs_ids_by_name
+  asg             = local.config.asg
+  subnets         = module.network.subnets
+  depends_on      = [module.database, module.efs, module.network, module.security_groups]
 }

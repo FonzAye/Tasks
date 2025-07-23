@@ -49,7 +49,7 @@
       "allocated_storage": 20,
       "zone": ["eu-central-1a", "eu-central-1b"],
       "subnets": ["database-subnet-a", "database-subnet-b"],
-      "port": 5432,
+      "port": 3306,
       "security_groups": ["test-sg", "test-sg-2"]
     }
   ],
@@ -100,14 +100,31 @@
       },
       "mount_targets": [
         {
-          "subnet": "private-subnet-a",
+          "subnet": "public-subnet-a",
           "security_groups": ["test-sg"]
         },
         {
-          "subnet": "private-subnet-b",
+          "subnet": "public-subnet-b",
           "security_groups": ["test-sg", "test-sg-2"]
         }
       ]
+    }
+  ],
+
+  "asg": [
+    {
+      "name": "tf-asg",
+      "desired_capacity": 1,
+      "max_size": 1,
+      "min_size": 1,
+      "force_delete": true,
+      "subnets": ["public-subnet-a", "public-subnet-b"],
+      "launch_template": {
+        "name": "tf-launch_template",
+        "instance_type": "t2.micro",
+        "security_groups": ["test-sg"],
+        "efs_name": "my_efs"
+      }
     }
   ]
 }

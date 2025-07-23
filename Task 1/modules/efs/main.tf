@@ -28,7 +28,7 @@ resource "aws_efs_mount_target" "this" {
   for_each = local.mount_targets
 
   file_system_id = aws_efs_file_system.this[each.value.creation_token].id
-  subnet_id      = var.private_subnets[each.value.subnet]
+  subnet_id      = var.subnets[each.value.subnet]
   security_groups = [
     for k in each.value.security_groups : var.sg_ids_by_name[k]
   ]

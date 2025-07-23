@@ -12,7 +12,7 @@ output "aws_subnets" {
 }
 
 output "subnets" {
-  value = aws_subnet.subnets
+  value = { for name, subnet in aws_subnet.subnets : name => subnet.id }
 }
 
 output "private_subnets" {
@@ -20,5 +20,13 @@ output "private_subnets" {
     for name, subnet in aws_subnet.subnets : 
     name => subnet.id
     if can(regex("private", name))
+  }
+}
+
+output "public_subnets" {
+  value = {
+    for name, subnet in aws_subnet.subnets : 
+    name => subnet.id
+    if can(regex("public", name))
   }
 }

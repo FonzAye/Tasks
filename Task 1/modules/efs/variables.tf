@@ -1,5 +1,5 @@
 variable "efs" {}
 
-variable "private_subnets" {}
+variable "subnets" {}
 
 variable "sg_ids_by_name" {}

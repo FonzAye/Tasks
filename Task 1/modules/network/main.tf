@@ -15,7 +15,9 @@ locals {
 resource "aws_vpc" "terraform" {
   for_each = local.vpcs
 
-  cidr_block = each.value.vpc_cidr_block
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  cidr_block           = each.value.vpc_cidr_block
   tags = {
     Name = each.value.name
   }
@@ -24,20 +26,20 @@ resource "aws_vpc" "terraform" {
 locals {
   first_public_subnet = keys(local.public_subnets)[0]
   public_subnets = {
-    for name, subnet in local.subnets : 
-    name => subnet 
+    for name, subnet in local.subnets :
+    name => subnet
     if can(regex("public", name))
   }
 
   private_subnets = {
-    for name, subnet in local.subnets : 
-    name => subnet 
+    for name, subnet in local.subnets :
+    name => subnet
     if can(regex("private", name))
   }
 
   database_subnets = {
-    for name, subnet in local.subnets : 
-    name => subnet 
+    for name, subnet in local.subnets :
+    name => subnet
     if can(regex("database", name))
   }
 }
@@ -56,7 +58,7 @@ resource "aws_internet_gateway" "gw" {
 resource "aws_eip" "nat" {
   for_each = length(local.private_subnets) > 0 && var.create_nat_gateway ? local.vpcs : {}
 
-  domain     = "vpc"
+  domain = "vpc"
   tags = {
     Name = "${each.value.name}-eip"
   }
@@ -111,7 +113,7 @@ resource "aws_route_table" "private" {
   for_each = length(local.private_subnets) > 0 ? local.vpcs : {}
 
   vpc_id = aws_vpc.terraform[each.key].id
-  tags = { Name = "${each.value.name}-private-rt" }
+  tags   = { Name = "${each.value.name}-private-rt" }
 }
 
 resource "aws_route" "private_nat" {
@@ -135,7 +137,7 @@ resource "aws_route_table" "database" {
 
   vpc_id = aws_vpc.terraform[each.key].id
   route {
-    cidr_block     = each.value.vpc_cidr_block
+    cidr_block = each.value.vpc_cidr_block
     gateway_id = "local"
   }
   tags = { Name = "${each.value.name}-database-rt" }

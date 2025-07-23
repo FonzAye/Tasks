@@ -1,18 +1,89 @@
 #!/bin/bash
-sudo yum update -y
-sudo yum install -y amazon-efs-utils
+set -xe
 
-# create mount point
-sudo mkdir -p /var/www
+# === Logging Setup ===
+LOG_FILE="/var/log/user-data.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
 
-# mount it
-sudo mount -t efs -o iam,tls ${efs_id}:/ /var/www
+# === Configuration Variables ===
+RDS_ENDPOINT=${RDS_ENDPOINT}
+DB_NAME=${DB_NAME}
+DB_USER=${DB_USER}
+DB_PASSWORD=${DB_PASSWORD}
+EFS_ID=${efs_id}  # Make sure this is passed from Terraform/CFN
 
-# add to /etc/fstab so it remounts on reboot
-echo "${efs_id}:/ /var/www efs defaults,_netdev 0 0" >> /etc/fstab
+# === 1. System Update & Dependency Installation ===
+dnf update -y || yum update -y
 
-# add repo with mysql
-sudo dnf -y localinstall https://dev.mysql.com/get/mysql80-community-release-el9-4.noarch.rpm
+# Core packages: Apache, PHP, MySQL client, EFS utils
+yum install -y \
+    httpd \
+    php php-mysqlnd php-fpm php-json php-mbstring php-xml \
+    php-opcache php-gd php-cli php-curl php-zip \
+    python3-pip \
+    amazon-efs-utils
 
-# install mysql
-sudo dnf -y install mysql mysql-community-client
+# Install botocore for EFS IAM access (if needed)
+pip3 install botocore
+
+# === 2. Mount Amazon EFS ===
+mkdir -p /var/www
+mount -t efs -o iam,tls "$EFS_ID":/ /var/www
+echo "$EFS_ID:/ /var/www efs defaults,_netdev 0 0" >> /etc/fstab
+
+# === 3. Install MySQL 8 Client (Optional override) ===
+dnf -y localinstall https://dev.mysql.com/get/mysql80-community-release-el9-4.noarch.rpm
+dnf -y install mysql mysql-community-client
+
+# === 4. PHP Configuration ===
+PHP_INI=$(php --ini | grep "Loaded Configuration" | awk '{print $4}')
+
+sed -i 's/^memory_limit = .*/memory_limit = 256M/' "$PHP_INI"
+sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 64M/' "$PHP_INI"
+sed -i 's/^post_max_size = .*/post_max_size = 64M/' "$PHP_INI"
+
+# === 5. Enable and Start Apache ===
+systemctl enable httpd
+systemctl start httpd
+
+# === 6. Download and Deploy WordPress ===
+cd /tmp
+curl -O https://wordpress.org/latest.tar.gz
+tar -xzf latest.tar.gz
+
+# Move files to Apache document root
+mkdir -p /var/www/html
+cp -r wordpress/* /var/www/html/
+
+# Set correct ownership and permissions
+chown -R apache:apache /var/www/html
+chmod -R 755 /var/www/html
+
+# === 7. Configure wp-config.php ===
+cd /var/www/html
+cp wp-config-sample.php wp-config.php
+
+# Insert DB connection details
+sed -i "s/database_name_here/$DB_NAME/" wp-config.php
+sed -i "s/username_here/$DB_USER/" wp-config.php
+sed -i "s/password_here/$DB_PASSWORD/" wp-config.php
+sed -i "s/localhost/$RDS_ENDPOINT/" wp-config.php
+
+# Fetch and add secure salts
+SALTS=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
+if [ -n "$SALTS" ]; then
+    sed -i "/AUTH_KEY/d" wp-config.php
+    sed -i "/put your unique phrase here/d" wp-config.php
+    echo "$SALTS" >> wp-config.php
+fi
+
+# === 8. Output Success Message ===
+PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+
+echo "===================================" >> "$LOG_FILE"
+echo "WordPress installation completed!" >> "$LOG_FILE"
+echo "Access it at: http://$PUBLIC_IP/" >> "$LOG_FILE"
+echo "==================================="
+
+echo "WordPress setup complete!"
+echo "Access your site: http://$PUBLIC_IP/"
