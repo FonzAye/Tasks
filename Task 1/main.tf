@@ -67,6 +67,8 @@ module "load_balancer" {
   subnets         = module.network.subnets
   load_balancers  = local.config.load_balancer
   vpc_ids_by_name = module.network.vpc_ids_by_name
+  listeners       = local.config.listener
+  target_groups   = local.config.target_group
 
   depends_on = [module.network, module.security_groups]
 }

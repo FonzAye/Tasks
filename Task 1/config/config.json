@@ -119,7 +119,7 @@
       "min_size": 1,
       "force_delete": true,
       "subnets": ["public-subnet-a", "public-subnet-b"],
-      "target_groups": ["tf-alb"],
+      "target_groups": ["tf-tg"],
       "launch_template": {
         "name": "tf-launch_template",
         "instance_type": "t2.micro",
@@ -140,25 +140,45 @@
       "port": 80,
       "target_type": "instance",
       "security_groups": ["test-sg"],
-      "subnets": ["public-subnet-a", "public-subnet-b"],
+      "subnets": ["public-subnet-a", "public-subnet-b"]
+    }
+  ],
 
-      "listener": {
-        "name": "tf-listener-ingress-http",
-        "protocol": "HTTP",
-        "port": 80,
-        "default_action": {
-          "type": "forward",
-          "target_group": "tf-tg"
+  "listener": [
+    {
+      "name": "tf-listener-ingress-http",
+      "protocol": "HTTP",
+      "port": 80,
+      "load_balancer": "tf-alb",
+      "default_action": {
+        "type": "redirect",
+        "redirect": {
+          "protocol": "HTTPS",
+          "port": 443,
+          "status_code": "HTTP_301"
         }
-      },
-
-      "target_group": {
-        "name": "tf-tg",
-        "vpc": "tf-vpc",
-        "protocol": "HTTP",
-        "port": 80,
-        "target_type": "instance"
       }
+    },
+    {
+      "name": "tf-listener-ingress-https",
+      "protocol": "HTTPS",
+      "port": 443,
+      "ssl_policy": "ELBSecurityPolicy-2016-08",
+      "load_balancer": "tf-alb",
+      "default_action": {
+        "type": "forward",
+        "target_group": "tf-tg"
+      }
+    }
+  ],
+
+  "target_group": [
+    {
+      "name": "tf-tg",
+      "vpc": "tf-vpc",
+      "protocol": "HTTP",
+      "port": 80,
+      "target_type": "instance"
     }
   ]
 }
