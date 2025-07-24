@@ -1,5 +1,7 @@
 locals {
   asgs = { for name, asg in var.asg : name => asg }
+
+  db_creds = { for name, db in var.db_creds : name => db }
 }
 
 resource "aws_launch_template" "this" {
@@ -12,10 +14,10 @@ resource "aws_launch_template" "this" {
     for k in each.value.launch_template.security_groups : var.sg_ids_by_name[k]
   ]
   user_data = base64encode(templatefile("${path.root}/scripts/user_data.sh.tmpl", {
-    RDS_ENDPOINT = "maindb.chig8a2qw98k.eu-central-1.rds.amazonaws.com",
-    DB_NAME      = "maindb",
-    DB_USER      = "admin",
-    DB_PASSWORD  = "g1e2o3r4g5e6W",
+    RDS_ENDPOINT = split(":", var.db_creds[each.value.launch_template.db_name].endpoint)[0],
+    DB_NAME      = var.db_creds[each.value.launch_template.db_name].db_name,
+    DB_USER      = var.db_creds[each.value.launch_template.db_name].username,
+    DB_PASSWORD  = var.db_creds[each.value.launch_template.db_name].password,
     efs_id       = var.efs_ids_by_name[each.value.launch_template.efs_name]
   }))
   iam_instance_profile {
@@ -32,6 +34,9 @@ resource "aws_autoscaling_group" "this" {
   max_size         = each.value.max_size
   min_size         = each.value.min_size
   force_delete     = each.value.force_delete
+  target_group_arns = [
+    for k in each.value.target_groups : var.tg_arns_by_name[k]
+  ]
   vpc_zone_identifier = [
     for k in each.value.subnets : var.subnets[k]
   ]

@@ -19,15 +19,6 @@ module "network" {
   create_nat_gateway = false
 }
 
-module "database" {
-  source = "./modules/database"
-
-  dbs            = local.config.databases
-  subnets        = module.network.subnets
-  sg_ids_by_name = module.security_groups.sg_ids_by_name
-  depends_on     = [module.network, module.security_groups]
-}
-
 module "security_groups" {
   source = "./modules/security-groups"
 
@@ -36,13 +27,24 @@ module "security_groups" {
   vpc_ids_by_name  = module.network.vpc_ids_by_name
 }
 
+module "database" {
+  source = "./modules/database"
+
+  dbs            = local.config.databases
+  subnets        = module.network.subnets
+  sg_ids_by_name = module.security_groups.sg_ids_by_name
+
+  depends_on = [module.network, module.security_groups]
+}
+
 module "efs" {
   source = "./modules/efs"
 
   efs            = local.config.efs
   subnets        = module.network.subnets
   sg_ids_by_name = module.security_groups.sg_ids_by_name
-  depends_on     = [module.network, module.security_groups]
+
+  depends_on = [module.network, module.security_groups]
 }
 
 module "asg" {
@@ -52,5 +54,19 @@ module "asg" {
   efs_ids_by_name = module.efs.efs_ids_by_name
   asg             = local.config.asg
   subnets         = module.network.subnets
-  depends_on      = [module.database, module.efs, module.network, module.security_groups]
+  db_creds        = module.database.db_creds
+  tg_arns_by_name = module.load_balancer.tg_arns_by_name
+
+  depends_on = [module.database, module.efs, module.network, module.security_groups, module.load_balancer]
+}
+
+module "load_balancer" {
+  source = "./modules/load-balancer"
+
+  sg_ids_by_name  = module.security_groups.sg_ids_by_name
+  subnets         = module.network.subnets
+  load_balancers  = local.config.load_balancer
+  vpc_ids_by_name = module.network.vpc_ids_by_name
+
+  depends_on = [module.network, module.security_groups]
 }

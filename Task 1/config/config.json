@@ -114,16 +114,50 @@
   "asg": [
     {
       "name": "tf-asg",
-      "desired_capacity": 1,
-      "max_size": 1,
+      "desired_capacity": 2,
+      "max_size": 3,
       "min_size": 1,
       "force_delete": true,
       "subnets": ["public-subnet-a", "public-subnet-b"],
+      "target_groups": ["tf-alb"],
       "launch_template": {
         "name": "tf-launch_template",
         "instance_type": "t2.micro",
         "security_groups": ["test-sg"],
-        "efs_name": "my_efs"
+        "efs_name": "my_efs",
+        "db_name": "maindb"
+      }
+    }
+  ],
+
+  "load_balancer": [
+    {
+      "name": "tf-alb",
+      "internal": false,
+      "load_balancer_type": "application",
+      "vpc": "tf-vpc",
+      "protocol": "HTTP",
+      "port": 80,
+      "target_type": "instance",
+      "security_groups": ["test-sg"],
+      "subnets": ["public-subnet-a", "public-subnet-b"],
+
+      "listener": {
+        "name": "tf-listener-ingress-http",
+        "protocol": "HTTP",
+        "port": 80,
+        "default_action": {
+          "type": "forward",
+          "target_group": "tf-tg"
+        }
+      },
+
+      "target_group": {
+        "name": "tf-tg",
+        "vpc": "tf-vpc",
+        "protocol": "HTTP",
+        "port": 80,
+        "target_type": "instance"
       }
     }
   ]

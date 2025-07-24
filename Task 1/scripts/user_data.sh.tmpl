@@ -42,10 +42,6 @@ sed -i 's/^memory_limit = .*/memory_limit = 256M/' "$PHP_INI"
 sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 64M/' "$PHP_INI"
 sed -i 's/^post_max_size = .*/post_max_size = 64M/' "$PHP_INI"
 
-# === 5. Enable and Start Apache ===
-systemctl enable httpd
-systemctl start httpd
-
 # === 6. Download and Deploy WordPress ===
 cd /tmp
 curl -O https://wordpress.org/latest.tar.gz
@@ -76,6 +72,10 @@ if [ -n "$SALTS" ]; then
     sed -i "/put your unique phrase here/d" wp-config.php
     echo "$SALTS" >> wp-config.php
 fi
+
+# === 5. Enable and Start Apache ===
+systemctl enable httpd
+systemctl start httpd
 
 # === 8. Output Success Message ===
 PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
