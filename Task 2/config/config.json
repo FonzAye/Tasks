@@ -1,0 +1,64 @@
+{
+  "network": [
+    {
+      "name": "tf-vpc",
+      "vpc_cidr_block": "10.0.0.0/16",
+      "subnets": [
+        {
+          "name": "public-subnet-a",
+          "cidr_block": "10.0.1.0/24",
+          "availability_zone": "eu-central-1a"
+        },
+        {
+          "name": "public-subnet-b",
+          "cidr_block": "10.0.2.0/24",
+          "availability_zone": "eu-central-1b"
+        }
+      ]
+    }
+  ],
+
+  "networks": [
+    { "name": "public", "cidr": "0.0.0.0/0" },
+    { "name": "internal", "cidr": "10.0.0.0/16" }
+  ],
+
+  "security_groups": [
+    {
+      "name": "test-sg",
+      "vpc": "tf-vpc",
+      "description": "test",
+      "ingress": [
+        { "protocol": "-1", "port": 0, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "-1", "port": 0, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "test-sg-2",
+      "vpc": "tf-vpc",
+      "description": "test",
+      "ingress": [
+        { "protocol": "-1", "port": 0, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "-1", "port": 0, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    }
+  ],
+
+  "vms": [
+    {
+      "name": "instance-1",
+      "ami": "ami-0af9b40b1a16fe700",
+      "instance_type": "t2.medium",
+      "subnet": "public-subnet-a",
+      "security_groups": ["test-sg"]
+    }
+  ]
+}
