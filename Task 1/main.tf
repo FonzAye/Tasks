@@ -70,5 +70,5 @@ module "load_balancer" {
   listeners       = local.config.listener
   target_groups   = local.config.target_group
 
-  depends_on = [module.network, module.security_groups]
+  depends_on = [module.network, module.security_groups, module.asg]
 }
