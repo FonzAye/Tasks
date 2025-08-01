@@ -1,0 +1,64 @@
+---
+- name: Ensure all packages are up to date
+  yum:
+    name: "*"
+    state: latest
+    update_cache: yes
+
+- name: Import Amazon Corretto GPG key
+  rpm_key:
+    key: https://yum.corretto.aws/corretto.key
+    state: present
+
+- name: Add Amazon Corretto yum repository
+  get_url:
+    url: https://yum.corretto.aws/corretto.repo
+    dest: /etc/yum.repos.d/corretto.repo
+    mode: "0644"
+
+- name: Install Amazon Corretto 11
+  yum:
+    name: java-11-amazon-corretto
+    state: present
+
+- name: Confirm Java version (optional)
+  command: java -version
+  register: java_version_output
+  changed_when: false
+  ignore_errors: true
+
+- name: Debug Java version
+  debug:
+    var: java_version_output.stderr_lines
+
+- name: Import Elasticsearch GPG key
+  rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add Elasticsearch yum repository
+  copy:
+    dest: /etc/yum.repos.d/elasticsearch.repo
+    content: |
+      [elasticsearch]
+      name=Elasticsearch repository
+      baseurl={{ elasticsearch_repo_url }}
+      gpgcheck=1
+      gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      enabled=1
+      autorefresh=1
+      type=rpm-md
+    mode: "0644"
+
+- name: Install Elasticsearch
+  yum:
+    name: elasticsearch
+    state: present
+    disable_gpg_check: no
+
+- name: Enable and start elasticsearch service
+  systemd:
+    name: elasticsearch
+    enabled: yes
+    state: started
+  notify: Restart Elasticsearch

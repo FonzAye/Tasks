@@ -54,11 +54,49 @@
 
   "vms": [
     {
-      "name": "instance-1",
+      "name": "node-1",
       "ami": "ami-0af9b40b1a16fe700",
-      "instance_type": "t2.medium",
+      "instance_type": "t2.large",
       "subnet": "public-subnet-a",
-      "security_groups": ["test-sg"]
+      "security_groups": ["test-sg"],
+      "user_data": "elasticsearch.sh"
+    },
+    {
+      "name": "node-2",
+      "ami": "ami-0af9b40b1a16fe700",
+      "instance_type": "t2.large",
+      "subnet": "public-subnet-a",
+      "security_groups": ["test-sg"],
+      "user_data": "elasticsearch.sh"
+    }
+  ],
+
+  "elasticache": [
+    {
+      "name": "example-primary",
+      "description": "2-node Redis cluster with master-replica",
+      "engine": "redis",
+      "engine_version": "6.x",
+      "node_type": "cache.t3.medium",
+      "num_cache_clusters": 2,
+      "automatic_failover_enabled": true,
+      "multi_az_enabled": true,
+      "security_groups": ["test-sg"],
+      "port": 6379,
+      "apply_immediately": true,
+      "parameter_group": {
+        "name": "custom-redis-params",
+        "family": "redis6.x",
+        "description": "Custom Redis parameter group",
+        "parameter": {
+          "name": "maxmemory-policy",
+          "value": "allkeys-lru"
+        }
+      },
+      "subnet_group": {
+        "name": "redis-subnet-group",
+        "subnets": ["public-subnet-a", "public-subnet-b"]
+      }
     }
   ]
 }

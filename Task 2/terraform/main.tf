@@ -34,3 +34,11 @@ module "vms" {
   sg_ids_by_name = module.security_groups.sg_ids_by_name
   subnets        = module.network.subnets
 }
+
+# module "elasticache" {
+#   source = "./modules/elasticache"
+
+#   el_c           = local.config.elasticache
+#   sg_ids_by_name = module.security_groups.sg_ids_by_name
+#   subnets        = module.network.subnets
+# }

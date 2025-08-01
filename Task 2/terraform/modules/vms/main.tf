@@ -23,5 +23,5 @@ resource "aws_instance" "vm" {
     Name = each.value.name
   }
 
-  user_data = file("${path.root}/scripts/elasticsearch-kibana.sh")
+  # user_data = file("${path.root}/scripts/${each.value.user_data}")
 }
