@@ -55,10 +55,3 @@
     name: elasticsearch
     state: present
     disable_gpg_check: no
-
-- name: Enable and start elasticsearch service
-  systemd:
-    name: elasticsearch
-    enabled: yes
-    state: started
-  notify: Restart Elasticsearch

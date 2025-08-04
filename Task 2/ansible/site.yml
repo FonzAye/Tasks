@@ -1,8 +1,14 @@
-- name: Configure /etc/hosts on all nodes
-  hosts: all
-  become: yes
-  roles:
-    - configure_hosts
+# - name: Configure /etc/hosts on all nodes
+#   hosts: all
+#   become: yes
+#   roles:
+#     - configure_hosts
+
+# - hosts: all
+#   gather_facts: false
+#   tasks:
+#     - name: Debug connection
+#       ansible.builtin.ping:
 
 - name: Install elasticsearch on all nodes
   hosts: all
@@ -15,3 +21,10 @@
   become: yes
   roles:
     - configure_elasticsearch
+
+- name: Install and configure Kibana
+  hosts: node-2
+  become: yes
+  roles:
+    - install_kibana
+    - configure_kibana

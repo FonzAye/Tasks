@@ -32,14 +32,24 @@
     group: elasticsearch
     mode: "0644"
     # validate: /usr/bin/python3 -c "import yaml, sys; yaml.safe_load(sys.stdin)"
-  notify: Restart Elasticsearch
 
-- name: Enable and start elasticsearch service
-  systemd:
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable and start Elasticsearch service
+  ansible.builtin.systemd:
     name: elasticsearch
     enabled: yes
-    state: restarted
-  notify: Restart Elasticsearch
+    state: started
+    masked: no
+  register: es_service
+# - name: Enable and start elasticsearch service
+#   systemd:
+#     name: elasticsearch
+#     enabled: yes
+#     state: started
+#   notify: Restart Elasticsearch
 # - name: Ensure Elasticsearch is enabled and started
 #   systemd:
 #     name: elasticsearch
