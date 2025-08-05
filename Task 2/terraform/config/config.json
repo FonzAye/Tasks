@@ -54,7 +54,7 @@
 
   "vms": [
     {
-      "name": "node-1",
+      "name": "es-1",
       "ami": "ami-0af9b40b1a16fe700",
       "instance_type": "t2.large",
       "subnet": "public-subnet-a",
@@ -62,7 +62,15 @@
       "user_data": "elasticsearch.sh"
     },
     {
-      "name": "node-2",
+      "name": "es-2",
+      "ami": "ami-0af9b40b1a16fe700",
+      "instance_type": "t2.large",
+      "subnet": "public-subnet-a",
+      "security_groups": ["test-sg"],
+      "user_data": "elasticsearch.sh"
+    },
+    {
+      "name": "kibana",
       "ami": "ami-0af9b40b1a16fe700",
       "instance_type": "t2.large",
       "subnet": "public-subnet-a",

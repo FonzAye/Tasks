@@ -8,7 +8,7 @@ path.logs: /var/log/elasticsearch
 bootstrap.memory_lock: true
 network.host: 0.0.0.0
 
-discovery.seed_hosts: [{% for host in groups['all'] %}
+discovery.seed_hosts: [{% for host in groups['elasticsearch'] %}
 {% if hostvars[host]['private_ip'] is defined %}
 "{{ hostvars[host]['private_ip'] }}"{% if not loop.last %},{% endif %}
 {% else %}
@@ -16,7 +16,7 @@ discovery.seed_hosts: [{% for host in groups['all'] %}
 {% endif %}
 {% endfor %}]
 
-cluster.initial_master_nodes: [{% for host in groups['all'] %}
+cluster.initial_master_nodes: [{% for host in groups['elasticsearch'] %}
 "{{ host }}"{% if not loop.last %},{% endif %}
 {% endfor %}]
 

@@ -10,20 +10,20 @@
 #     - name: Debug connection
 #       ansible.builtin.ping:
 
-- name: Install elasticsearch on all nodes
-  hosts: all
+- name: Install elasticsearch
+  hosts: elasticsearch
   become: yes
   roles:
     - install_elasticsearch
 
 - name: Configure Elasticsearch Cluster
-  hosts: all
+  hosts: elasticsearch
   become: yes
   roles:
     - configure_elasticsearch
 
 - name: Install and configure Kibana
-  hosts: node-2
+  hosts: kibana
   become: yes
   roles:
     - install_kibana
