@@ -1,7 +1,7 @@
 # /etc/elasticsearch/elasticsearch.yml - managed by Ansible
 
 cluster.name: es-nodes
-node.roles: [ master, data, ingest ]
+node.roles: [ master, data, ingest, remote_cluster_client ]
 node.name: {{ inventory_hostname }}
 path.data: /var/lib/elasticsearch
 path.logs: /var/log/elasticsearch

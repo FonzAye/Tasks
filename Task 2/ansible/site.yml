@@ -10,21 +10,35 @@
 #     - name: Debug connection
 #       ansible.builtin.ping:
 
-- name: Install elasticsearch
-  hosts: elasticsearch
-  become: yes
-  roles:
-    - install_elasticsearch
+# - name: Install elasticsearch
+#   hosts: elasticsearch
+#   become: yes
+#   roles:
+#     - install_elasticsearch
 
-- name: Configure Elasticsearch Cluster
-  hosts: elasticsearch
-  become: yes
-  roles:
-    - configure_elasticsearch
+# - name: Configure Elasticsearch Cluster
+#   hosts: elasticsearch
+#   become: yes
+#   roles:
+#     - configure_elasticsearch
 
-- name: Install and configure Kibana
-  hosts: kibana
+# - name: Install and configure Kibana
+#   hosts: kibana
+#   become: yes
+#   roles:
+#     - install_kibana
+#     - configure_kibana
+
+# - name: Install and configure Logstash
+#   hosts: logstash_filebeat
+#   become: yes
+#   roles:
+#     - install_logstash
+#     - configure_logstash
+
+- name: Install and configure Filebeat
+  hosts: logstash_filebeat
   become: yes
   roles:
-    - install_kibana
-    - configure_kibana
+    - install_filebeat
+    - configure_filebeat

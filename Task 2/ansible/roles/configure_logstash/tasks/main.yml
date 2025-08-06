@@ -1,0 +1,22 @@
+- name: "Configure /etc/logstash/conf.d/logstash.conf"
+  ansible.builtin.template:
+    src: logstash.yml.j2
+    dest: /etc/logstash/conf.d/logstash.conf
+    owner: logstash
+    group: logstash
+    mode: '0644'
+    backup: yes
+  register: logstash_config
+  failed_when: logstash_config is failed
+  changed_when: logstash_config.changed
+
+- name: "Enable and start Logstash service"
+  ansible.builtin.systemd:
+    name: logstash
+    enabled: yes
+    state: started
+    daemon_reload: yes  # Ensures systemd picks up any changes (e.g. service unit updates)
+    masked: no
+  register: logstash_service
+  failed_when: logstash_service is failed
+  changed_when: logstash_service.changed

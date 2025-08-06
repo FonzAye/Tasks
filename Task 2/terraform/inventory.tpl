@@ -17,6 +17,13 @@ ${name} ansible_host=${public_dns_names[name]} private_ip=${private_ips[name]}
 %{ endif ~}
 %{ endfor ~}
 
+[logstash/filebeat]
+%{ for name in node_names ~}
+%{ if startswith(name, "logstash") ~}
+${name} ansible_host=${public_dns_names[name]} private_ip=${private_ips[name]}
+%{ endif ~}
+%{ endfor ~}
+
 [all:vars]
 ansible_user=ec2-user
 ansible_ssh_private_key_file=~/.ssh/id_rsa

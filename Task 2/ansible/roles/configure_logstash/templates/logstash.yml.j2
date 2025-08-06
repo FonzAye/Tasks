@@ -1,0 +1,33 @@
+input {
+  beats {
+    port => 5044
+  }
+}
+output {
+  if [@metadata][pipeline] {
+	elasticsearch {
+  	hosts => [{% for host in groups['elasticsearch'] %}
+{% if hostvars[host]['private_ip'] is defined %}
+"{{ hostvars[host]['private_ip'] }}:9200"{% if not loop.last %}, {% endif %}
+{% else %}
+{% set _ = errors.append(host) %}
+{% endif %}
+{% endfor %}]
+  	manage_template => false
+  	index => "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+  	pipeline => "%{[@metadata][pipeline]}"
+	}
+  } else {
+	elasticsearch {
+  	hosts => [{% for host in groups['elasticsearch'] %}
+{% if hostvars[host]['private_ip'] is defined %}
+"{{ hostvars[host]['private_ip'] }}:9200"{% if not loop.last %}, {% endif %}
+{% else %}
+{% set _ = errors.append(host) %}
+{% endif %}
+{% endfor %}]
+  	manage_template => false
+  	index => "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+	}
+  }
+}

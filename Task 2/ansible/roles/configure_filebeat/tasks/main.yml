@@ -1,0 +1,47 @@
+---
+# === COMMENT OUT Elasticsearch OUTPUT ===
+- name: Comment out "output.elasticsearch:" line
+  ansible.builtin.replace:
+    path: /etc/filebeat/filebeat.yml
+    regexp: "^[\\s]*output\\.elasticsearch:"
+    replace: "# output.elasticsearch:"
+
+- name: Comment out Elasticsearch hosts line
+  ansible.builtin.replace:
+    path: /etc/filebeat/filebeat.yml
+    regexp: "^[\\s]*hosts:\\s*\\[\"localhost:9200\"\\]"
+    replace: "#   hosts: [\"localhost:9200\"]"
+
+# === UNCOMMENT Logstash OUTPUT ===
+- name: Uncomment "output.logstash:" line
+  ansible.builtin.replace:
+    path: /etc/filebeat/filebeat.yml
+    regexp: "^[#\\s]*output\\.logstash:"
+    replace: "output.logstash:"
+
+- name: Uncomment Logstash hosts line
+  ansible.builtin.replace:
+    path: /etc/filebeat/filebeat.yml
+    regexp: "^[#\\s]*hosts:\\s*\\[\"localhost:5044\"\\]"
+    replace: "  hosts: [\"localhost:5044\"]"
+  notify: Restart filebeat
+
+- name: "Configure /etc/filebeat/modules.d/system.yml"
+  ansible.builtin.template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/modules.d/system.yml
+    backup: yes
+  register: filebeat_config
+  failed_when: filebeat_config is failed
+  changed_when: filebeat_config.changed
+
+- name: "Enable and start Filebeat service"
+  ansible.builtin.systemd:
+    name: filebeat
+    enabled: yes
+    state: started
+    daemon_reload: yes  # Ensures systemd picks up any changes (e.g. service unit updates)
+    masked: no
+  register: filebeat_service
+  failed_when: filebeat_service is failed
+  changed_when: filebeat_service.changed
