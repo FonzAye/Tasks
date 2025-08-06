@@ -1,25 +1,38 @@
-# Module: system
-# Docs: https://www.elastic.co/guide/en/beats/filebeat/8.17/filebeat-module-system.html
-
-- module: system
-  # Syslog
-  syslog:
+filebeat.inputs:
+  - type: log
     enabled: true
+    paths:
+      - /var/log/*.log
 
-    # Set custom paths for the log files. If left empty,
-    # Filebeat will choose the paths depending on your OS.
-    #var.paths:
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
 
-    # Use journald to collect system logs
-    #var.use_journald: false
+  reload.enabled: false
 
-  # Authorization logs
-  auth:
-    enabled: true
+setup.template.settings:
+  index.number_of_shards: 1
+  preset: balanced
 
-    # Set custom paths for the log files. If left empty,
-    # Filebeat will choose the paths depending on your OS.
-    #var.paths:
+output.logstash:
+  # The Logstash hosts
+  hosts: ["localhost:5044"]
+  enabled: false
 
-    # Use journald to collect auth logs
-    #var.use_journald: false
+output.elasticsearch:
+  hosts: [{% for host in groups['elasticsearch'] %}
+{% if hostvars[host]['private_ip'] is defined %}
+"http://{{ hostvars[host]['private_ip'] }}"{% if not loop.last %},{% endif %}
+{% else %}
+{% set _ = errors.append(host) %}
+{% endif %}
+{% endfor %}]
+
+setup.kibana:
+  host: "{{ hostvars['kibana']['private_ip'] }}:5601"
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
