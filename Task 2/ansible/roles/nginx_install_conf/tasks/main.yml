@@ -1,0 +1,19 @@
+---
+- name: Install nginx
+  ansible.builtin.dnf:
+    name: nginx
+    state: present
+
+- name: Create nginx config for oauth2-proxy
+  ansible.builtin.template:
+    src: oauth2-proxy.conf.j2
+    dest: /etc/nginx/conf.d/oauth2-proxy.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Ensure nginx is enabled and running
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true

@@ -30,9 +30,23 @@ module "security_groups" {
 module "vms" {
   source = "./modules/vms"
 
-  vms            = local.config.vms
-  sg_ids_by_name = module.security_groups.sg_ids_by_name
-  subnets        = module.network.subnets
+  vms             = local.config.vms
+  sg_ids_by_name  = module.security_groups.sg_ids_by_name
+  subnets         = module.network.subnets
+  tg_arns_by_name = module.load_balancer.tg_arns_by_name
+}
+
+module "load_balancer" {
+  source = "./modules/load-balancer"
+
+  sg_ids_by_name  = module.security_groups.sg_ids_by_name
+  subnets         = module.network.subnets
+  load_balancers  = local.config.load_balancer
+  vpc_ids_by_name = module.network.vpc_ids_by_name
+  listeners       = local.config.listener
+  target_groups   = local.config.target_group
+
+  depends_on = [module.network, module.security_groups]
 }
 
 # module "elasticache" {

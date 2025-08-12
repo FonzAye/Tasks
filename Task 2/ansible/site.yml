@@ -4,11 +4,11 @@
   roles:
     - configure_hosts
 
-# - hosts: all
-#   gather_facts: false
-#   tasks:
-#     - name: Debug connection
-#       ansible.builtin.ping:
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Debug connection
+      ansible.builtin.ping:
 
 - name: Install elasticsearch
   hosts: elasticsearch
@@ -28,6 +28,8 @@
   roles:
     - install_kibana
     - configure_kibana
+    - nginx_install_conf
+    - oauth2-proxy_install_conf
 
 - name: Install and configure Logstash and Filebeat
   hosts: logstash/filebeat
