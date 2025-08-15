@@ -9,7 +9,7 @@ def fetch_url():
         status_code = response.status_code
         response_time = response.elapsed.total_seconds()
         
-        if status_code >= 200 or status_code <= 399:
+        if status_code >= 200 and status_code <= 399:
             print(f'The status code: {status_code}, Response time: {response_time}')
         elif status_code >= 400 and status_code <= 599:
             print(f'We are in trouble Houston! Status code: {status_code}')
