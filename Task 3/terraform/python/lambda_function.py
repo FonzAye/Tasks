@@ -1,3 +1,4 @@
+# health_check.py
 import os
 import requests
 import boto3
@@ -6,13 +7,11 @@ from datetime import datetime, timezone
 from botocore.exceptions import ClientError
 from urllib.parse import urlparse
 
-# DynamoDB config
-DYNAMODB_TABLE = os.environ.get("DYNAMODB_TABLE", "EndpointHealth")
-dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table(DYNAMODB_TABLE)
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('EndpointHealth')
 
 # URL to check
-URL = os.environ.get("MONITOR_URL", "https://ad13e832c802.ngrok-free.app/")
+URL = os.environ.get("MONITOR_URL", "https://544f19c99705.ngrok-free.app/")
 
 def get_ip_from_url(url):
     """Resolve IP address from a URL."""
@@ -64,14 +63,24 @@ def lambda_handler(event, context):
         status_code = response.status_code
         response_time = response.elapsed.total_seconds()
 
+        failure_count = 0
+
         if 200 <= status_code <= 399:
             message = f"Status: {status_code}, Response time: {response_time:.2f}s, IP: {ip_address}"
             update_failure_count(URL, status_code, healthy=True)
 
-        elif 400 <= status_code <= 500:
-            message = f"Status: {status_code}, IP: {ip_address}"
+        elif 400 <= status_code <= 599:
+            # update DynamoDB failure counter
             update_failure_count(URL, status_code, healthy=False)
 
+            # get new failure_count
+            db_item = table.get_item(Key={'endpoint_url': URL})
+            failure_count = db_item['Item'].get('failure_count', 0)
+
+            if failure_count >= 3:
+                message = f"Status: {status_code}, Response time: {response_time:.2f}s, IP: {ip_address}, Failures: {failure_count} ALERT: 3 or more failures in a row!!! Sending notification."
+            else:
+                message = f"Status: {status_code}, Response time: {response_time:.2f}s, IP: {ip_address}, Failures: {failure_count}"
         else:
             message = f"Unexpected status code: {status_code}, IP: {ip_address}"
 
@@ -81,5 +90,4 @@ def lambda_handler(event, context):
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed: {e}, IP: {ip_address}"
         print(error_message)
-        update_failure_count(URL, 0, healthy=False)
         return {"statusCode": 500, "message": error_message}
