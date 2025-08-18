@@ -33,4 +33,5 @@ module "lambda" {
   lambdas = local.config.lambdas
   sg_ids_by_name = module.security_groups.sg_ids_by_name
   subnets = module.network.subnets
+  layers = local.config.layers
 }
