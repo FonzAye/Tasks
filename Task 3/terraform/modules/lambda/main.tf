@@ -85,6 +85,8 @@ resource "aws_iam_policy" "lambda_policy" {
           "sns:Subscribe",
           "sns:Unsubscribe",
           "sns:SetTopicAttributes",
+          "sns:Publish",
+          "ssm:*",
           "lambda:CreateFunction",
           "lambda:ListFunctions",
           "lambda:ListEventSourceMappings",
