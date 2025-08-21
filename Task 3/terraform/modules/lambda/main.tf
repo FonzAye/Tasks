@@ -85,6 +85,8 @@ resource "aws_iam_policy" "lambda_policy" {
           "sns:Subscribe",
           "sns:Unsubscribe",
           "sns:SetTopicAttributes",
+          "sns:Publish",
+          "ssm:*",
           "lambda:CreateFunction",
           "lambda:ListFunctions",
           "lambda:ListEventSourceMappings",
@@ -181,7 +183,7 @@ resource "aws_lambda_function" "python_lambda" {
   # vpc_config {
   #   subnet_ids         = [for k in each.value.subnets : var.subnets[k]]
   #   security_group_ids = [for k in each.value.security_groups : var.sg_ids_by_name[k]]
-  # }
+  # } // Uncomment to be able to target inside-VPC resources
   layers = [for k in each.value.layers : aws_lambda_layer_version.this[k].arn]
 }
 
