@@ -17,9 +17,6 @@ ssm = boto3.client('ssm')
 SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN", "arn:aws:sns:eu-central-1:253490768279:lambda-endpoint-health-alerts")
 ENDPOINTS_PARAM = os.environ.get("ENDPOINTS_PARAM", "/monitoring/endpoints")  
 
-# URL to check
-URL = os.environ.get("MONITOR_URL", "https://544f19c99705.ngrok-free.app/")
-
 def get_ip_from_url(url):
     """Resolve IP address from a URL."""
     try:
