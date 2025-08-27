@@ -1,0 +1,188 @@
+#!/bin/bash
+set -xe
+
+# === Logging Setup ===
+LOG_FILE="/var/log/user-data.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+# === Configuration Variables ===
+RDS_ENDPOINT=${RDS_ENDPOINT}
+DB_NAME=${DB_NAME}
+DB_USER=${DB_USER}
+DB_PASSWORD=${DB_PASSWORD}
+EFS_ID=${efs_id}  # Make sure this is passed from Terraform/CFN
+
+# === 1. System Update & Dependency Installation ===
+dnf update -y || yum update -y
+
+# Core packages: Apache, PHP, MySQL client, EFS utils
+yum install -y \
+    httpd \
+    php php-mysqlnd php-fpm php-json php-mbstring php-xml \
+    php-opcache php-gd php-cli php-curl php-zip \
+    python3-pip \
+    amazon-efs-utils
+
+# Install botocore for EFS IAM access (if needed)
+pip3 install botocore
+
+# === 2. Mount Amazon EFS ===
+mkdir -p /var/www
+mount -t efs -o iam,tls "$EFS_ID":/ /var/www
+echo "$EFS_ID:/ /var/www efs defaults,_netdev 0 0" >> /etc/fstab
+
+# === 3. Install MySQL 8 Client (Optional override) ===
+dnf -y localinstall https://dev.mysql.com/get/mysql80-community-release-el9-4.noarch.rpm
+dnf -y install mysql mysql-community-client
+
+# === 4. PHP Configuration ===
+PHP_INI=$(php --ini | grep "Loaded Configuration" | awk '{print $4}')
+
+sed -i 's/^memory_limit = .*/memory_limit = 256M/' "$PHP_INI"
+sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 64M/' "$PHP_INI"
+sed -i 's/^post_max_size = .*/post_max_size = 64M/' "$PHP_INI"
+
+# === 6. Download and Deploy WordPress ===
+cd /tmp
+curl -O https://wordpress.org/latest.tar.gz
+tar -xzf latest.tar.gz
+
+# Move files to Apache document root
+mkdir -p /var/www/html
+cp -r wordpress/* /var/www/html/
+
+# Set correct ownership and permissions
+chown -R apache:apache /var/www/html
+chmod -R 755 /var/www/html
+
+# === 7. Configure wp-config.php ===
+cd /var/www/html
+cp wp-config-sample.php wp-config.php
+
+# Insert DB connection details
+sed -i "s/database_name_here/$DB_NAME/" wp-config.php
+sed -i "s/username_here/$DB_USER/" wp-config.php
+sed -i "s/password_here/$DB_PASSWORD/" wp-config.php
+sed -i "s/localhost/$RDS_ENDPOINT/" wp-config.php
+
+# Fetch and add secure salts
+SALTS=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
+if [ -n "$SALTS" ]; then
+    sed -i "/AUTH_KEY/d" wp-config.php
+    sed -i "/put your unique phrase here/d" wp-config.php
+    echo "$SALTS" >> wp-config.php
+fi
+
+# === 5. Enable and Start Apache ===
+systemctl enable httpd
+systemctl start httpd
+
+# === 8. Output Success Message ===
+PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+
+echo "===================================" >> "$LOG_FILE"
+echo "WordPress installation completed!" >> "$LOG_FILE"
+echo "Access it at: http://$PUBLIC_IP/" >> "$LOG_FILE"
+echo "==================================="
+
+echo "WordPress setup complete!"
+echo "Access your site: http://$PUBLIC_IP/"
+
+# Update all packages
+sudo yum update -y
+
+# Import Amazon Corretto GPG key and add its repository
+sudo rpm --import https://yum.corretto.aws/corretto.key
+sudo curl -L -o /etc/yum.repos.d/corretto.repo https://yum.corretto.aws/corretto.repo
+
+# Install Amazon Corretto 11 (Java 11)
+sudo yum install -y java-11-amazon-corretto
+java -version  # Optional: confirm installation
+
+# Import Elasticsearch GPG key
+sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+# Add the Elasticsearch yum repository
+sudo tee /etc/yum.repos.d/elasticsearch.repo > /dev/null <<EOF
+[elasticsearch]
+name=Elasticsearch repository
+baseurl=https://artifacts.elastic.co/packages/8.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+EOF
+
+echo "Installing Filebeat..."
+
+yum install -y filebeat
+
+# === Variables ===
+FILEBEAT_CONFIG="/etc/filebeat/filebeat.yml"
+SYSTEM_MODULE_CONFIG="/etc/filebeat/modules.d/system.yml"
+
+# === Ensure directories exist ===
+mkdir -p /etc/filebeat/modules.d
+
+# === Apply filebeat.yml configuration ===
+cat > "$FILEBEAT_CONFIG" <<'EOF'
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/*.log
+
+filebeat.config.modules:
+  path: /etc/filebeat/modules.d/*.yml
+  reload.enabled: false
+
+setup.template.settings:
+  index.number_of_shards: 1
+  preset: balanced
+
+output.logstash:
+  # The Logstash hosts
+  hosts: ["logstash/filebeat:5044"]
+  enabled: false
+
+# Replace this with your Elasticsearch hosts manually if needed
+output.elasticsearch:
+  hosts: ["http://es-1:9200", "http://es-2:9200"]
+
+setup.kibana:
+  host: "kibana:5601"
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+EOF
+
+echo "[INFO] Wrote $FILEBEAT_CONFIG"
+
+# === Apply system.yml configuration ===
+
+cat > "$SYSTEM_MODULE_CONFIG" <<'EOF'
+- module: system
+  # Syslog
+  syslog:
+    enabled: true
+
+  # Authorization logs
+  auth:
+    enabled: true
+EOF
+
+echo "[INFO] Wrote $SYSTEM_MODULE_CONFIG"
+
+# === Enable & start Filebeat ===
+echo "[INFO] Enabling and starting Filebeat..."
+systemctl daemon-reload
+systemctl enable filebeat
+systemctl unmask filebeat || true
+systemctl start filebeat
+
+echo "[INFO] Filebeat configured and started successfully."
