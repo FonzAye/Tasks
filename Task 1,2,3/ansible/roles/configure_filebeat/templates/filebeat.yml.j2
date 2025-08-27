@@ -1,0 +1,38 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/*.log
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+
+  reload.enabled: false
+
+setup.template.settings:
+  index.number_of_shards: 1
+  preset: balanced
+
+output.logstash:
+  # The Logstash hosts
+  hosts: ["localhost:5044"]
+  enabled: false
+
+output.elasticsearch:
+  hosts: [{% for host in groups['elasticsearch'] %}
+{% if hostvars[host]['private_ip'] is defined %}
+"http://{{ hostvars[host]['private_ip'] }}"{% if not loop.last %},{% endif %}
+{% else %}
+{% set _ = errors.append(host) %}
+{% endif %}
+{% endfor %}]
+
+setup.kibana:
+  host: "{{ hostvars['kibana']['private_ip'] }}:5601"
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~

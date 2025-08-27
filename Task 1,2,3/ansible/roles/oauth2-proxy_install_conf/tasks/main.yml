@@ -1,0 +1,57 @@
+---
+- name: Ensure dependencies are installed
+  ansible.builtin.package:
+    name: wget
+    state: present
+
+- name: Download oauth2-proxy archive
+  ansible.builtin.get_url:
+    url: "{{ oauth2_proxy_download_url }}"
+    dest: "/tmp/oauth2-proxy.tar.gz"
+    mode: '0644'
+
+- name: Extract oauth2-proxy
+  ansible.builtin.unarchive:
+    src: "/tmp/oauth2-proxy.tar.gz"
+    dest: "/tmp"
+    remote_src: true
+    creates: "/tmp/oauth2-proxy-{{ oauth2_proxy_version }}.linux-amd64/oauth2-proxy"
+
+- name: Move oauth2-proxy binary to install dir
+  ansible.builtin.copy:
+    src: "/tmp/oauth2-proxy-{{ oauth2_proxy_version }}.linux-amd64/oauth2-proxy"
+    dest: "{{ oauth2_proxy_install_dir }}/oauth2-proxy"
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: true
+
+- name: Create oauth2-proxy config directory
+  ansible.builtin.file:
+    path: "{{ oauth2_proxy_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy oauth2-proxy configuration
+  ansible.builtin.template:
+    src: oauth2-proxy.cfg.j2
+    dest: "{{ oauth2_proxy_config_dir }}/oauth2-proxy.cfg"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy systemd service for oauth2-proxy
+  ansible.builtin.template:
+    src: oauth2-proxy.service.j2
+    dest: /etc/systemd/system/oauth2-proxy.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Ensure oauth2-proxy is enabled and started
+  ansible.builtin.service:
+    name: oauth2-proxy
+    state: started
+    enabled: true

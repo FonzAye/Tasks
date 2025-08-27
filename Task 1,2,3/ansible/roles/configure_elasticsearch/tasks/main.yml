@@ -1,0 +1,72 @@
+---
+- name: Fail if Elasticsearch is not installed
+  stat:
+    path: /etc/elasticsearch/elasticsearch.yml
+  register: elasticsearch_config
+
+- name: Abort if Elasticsearch config file is missing
+  fail:
+    msg: "Elasticsearch does not appear to be installed."
+  when: not elasticsearch_config.stat.exists
+
+- name: Fail if any host is missing 'private_ip'
+  assert:
+    that:
+      - hostvars[item].private_ip is defined
+    fail_msg: "Host {{ item }} is missing 'private_ip' in inventory."
+  loop: "{{ groups['all'] }}"
+
+- name: Backup existing elasticsearch.yml
+  copy:
+    src: /etc/elasticsearch/elasticsearch.yml
+    dest: /etc/elasticsearch/elasticsearch.yml.bak
+    remote_src: yes
+    backup: yes
+  when: elasticsearch_config.stat.exists
+
+- name: Apply elasticsearch.yml configuration from template
+  template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: elasticsearch
+    group: elasticsearch
+    mode: "0644"
+    # validate: /usr/bin/python3 -c "import yaml, sys; yaml.safe_load(sys.stdin)"
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable and start Elasticsearch service
+  ansible.builtin.systemd:
+    name: elasticsearch
+    enabled: yes
+    state: started
+    masked: no
+  register: es_service
+# - name: Enable and start elasticsearch service
+#   systemd:
+#     name: elasticsearch
+#     enabled: yes
+#     state: started
+#   notify: Restart Elasticsearch
+# - name: Ensure Elasticsearch is enabled and started
+#   systemd:
+#     name: elasticsearch
+#     enabled: yes
+#     state: started
+
+# - name: Wait for Elasticsearch HTTP port to respond
+#   wait_for:
+#     port: 9200
+#     host: "{{ inventory_hostname }}"
+#     delay: 5
+#     timeout: 30
+
+# - name: Verify node-to-node connectivity (basic TCP check)
+#   wait_for:
+#     host: "{{ item }}"
+#     port: 9300
+#     timeout: 10
+#   loop: "{{ groups['all'] | map('extract', hostvars, ['private_ip']) | select('defined') | list }}"
+#   when: inventory_hostname != item

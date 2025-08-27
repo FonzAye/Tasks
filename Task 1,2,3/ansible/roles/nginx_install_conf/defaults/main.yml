@@ -1,0 +1,5 @@
+---
+# Default values
+nginx_listen_port: 8080
+nginx_server_name: localhost
+nginx_proxy_target: 127.0.0.1:4180

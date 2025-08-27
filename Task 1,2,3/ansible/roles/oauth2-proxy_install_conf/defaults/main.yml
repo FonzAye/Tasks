@@ -1,0 +1,19 @@
+---
+oauth2_proxy_version: "v7.6.0"
+oauth2_proxy_download_url: "https://github.com/oauth2-proxy/oauth2-proxy/releases/download/{{ oauth2_proxy_version }}/oauth2-proxy-{{ oauth2_proxy_version }}.linux-amd64.tar.gz"
+
+oauth2_proxy_install_dir: "/usr/local/bin"
+oauth2_proxy_config_dir: "/etc/oauth2-proxy"
+
+# OAuth2 settings
+oauth2_proxy_provider: "github"
+oauth2_proxy_client_id: "Ov23liImiLD2hIGIheoi"
+oauth2_proxy_client_secret: "5924e6dfa9dfaf83432378e31b8dc21a01ea2ec2"
+oauth2_proxy_cookie_secret: "xYJqMtkvR5nn6imvUm2ik5kP9lMvFwxK"
+
+oauth2_proxy_cookie_secure: false
+oauth2_proxy_email_domains: ["*"]
+
+oauth2_proxy_redirect_url: "https://es-cluster.fonz-ocg4.click/oauth2/callback"
+oauth2_proxy_upstreams:
+  - "http://localhost:5601"

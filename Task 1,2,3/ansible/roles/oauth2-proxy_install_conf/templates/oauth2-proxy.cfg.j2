@@ -1,0 +1,11 @@
+provider = "{{ oauth2_proxy_provider }}"
+client_id = "{{ oauth2_proxy_client_id }}"
+client_secret = "{{ oauth2_proxy_client_secret }}"
+cookie_secret = "{{ oauth2_proxy_cookie_secret }}"
+
+cookie_secure = {{ oauth2_proxy_cookie_secure | lower }}
+
+email_domains = {{ oauth2_proxy_email_domains | to_json }}
+
+redirect_url = "{{ oauth2_proxy_redirect_url }}"
+upstreams = {{ oauth2_proxy_upstreams | to_json }}

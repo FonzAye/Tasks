@@ -1,0 +1,38 @@
+---
+- name: Backup existing /etc/hosts
+  copy:
+    src: /etc/hosts
+    dest: /etc/hosts.bak
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0644
+  when: not backup_done is defined
+  vars:
+    backup_done: true
+
+- name: Gather host mapping data from inventory
+  set_fact:
+    all_hosts_data: >-
+      {{
+        groups['all'] | map('extract', hostvars, ['inventory_hostname', 'private_ip', 'ansible_host']) | 
+        selectattr('1', 'defined') | 
+        map('list') | 
+        list
+      }}
+
+- name: Render new /etc/hosts file with node data
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: "0644"
+    backup: yes
+  # notify: Validate DNS resolution
+  register: hosts_template_result
+
+- name: Show changed hosts
+  debug:
+    msg: "/etc/hosts updated on {{ inventory_hostname }}"
+  when: hosts_template_result.changed

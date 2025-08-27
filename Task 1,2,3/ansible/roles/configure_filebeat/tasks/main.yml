@@ -1,0 +1,25 @@
+---
+- name: Apply filebeat.yml configuration from template
+  ansible.builtin.template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+
+- name: "Configure /etc/filebeat/modules.d/system.yml"
+  ansible.builtin.template:
+    src: system.yml.j2
+    dest: /etc/filebeat/modules.d/system.yml`
+    backup: yes
+  register: system_config
+  failed_when: system_config is failed
+  changed_when: system_config.changed
+
+- name: "Enable and start Filebeat service"
+  ansible.builtin.systemd:
+    name: filebeat
+    enabled: yes
+    state: started
+    daemon_reload: yes  # Ensures systemd picks up any changes (e.g. service unit updates)
+    masked: no
+  register: filebeat_service
+  failed_when: filebeat_service is failed
+  changed_when: filebeat_service.changed
