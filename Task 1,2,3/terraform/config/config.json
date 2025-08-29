@@ -1,0 +1,334 @@
+{
+  "network": [
+    {
+      "name": "tf-vpc",
+      "vpc_cidr_block": "10.0.0.0/16",
+      "subnets": [
+        {
+          "name": "public-subnet-a",
+          "cidr_block": "10.0.1.0/24",
+          "availability_zone": "eu-central-1a"
+        },
+        {
+          "name": "public-subnet-b",
+          "cidr_block": "10.0.2.0/24",
+          "availability_zone": "eu-central-1b"
+        },
+        {
+          "name": "private-subnet-a",
+          "cidr_block": "10.0.3.0/24",
+          "availability_zone": "eu-central-1a"
+        },
+        {
+          "name": "private-subnet-b",
+          "cidr_block": "10.0.4.0/24",
+          "availability_zone": "eu-central-1b"
+        },
+        {
+          "name": "database-subnet-a",
+          "cidr_block": "10.0.101.0/24",
+          "availability_zone": "eu-central-1a"
+        },
+        {
+          "name": "database-subnet-b",
+          "cidr_block": "10.0.102.0/24",
+          "availability_zone": "eu-central-1b"
+        }
+      ]
+    }
+  ],
+
+  "databases": [
+    {
+      "name": "maindb",
+      "network": "tf-vpc",
+      "engine": "mysql",
+      "engine_version": "8.0",
+      "parameter_group_name": "default.mysql8.0",
+      "instance_class": "db.t3.micro",
+      "allocated_storage": 20,
+      "zone": ["eu-central-1a", "eu-central-1b"],
+      "subnets": ["database-subnet-a", "database-subnet-b"],
+      "port": 3306,
+      "security_groups": ["test-sg"]
+    }
+  ],
+
+  "networks": [
+    { "name": "public", "cidr": "0.0.0.0/0" },
+    { "name": "internal", "cidr": "10.0.0.0/16" }
+  ],
+
+  "security_groups": [
+    {
+      "name": "test-sg",
+      "vpc": "tf-vpc",
+      "description": "test",
+      "ingress": [
+        { "protocol": "-1", "port": 0, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "-1", "port": 0, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "es-sg",
+      "vpc": "tf-vpc",
+      "description": "Security group for ElasticSearch",
+      "ingress": [
+        { "protocol": "TCP", "port": 9200, "source": "public" },
+        { "protocol": "TCP", "port": 9300, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "-1", "port": 0, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "kibana-sg",
+      "vpc": "tf-vpc",
+      "description": "Security group for Kibana",
+      "ingress": [
+        { "protocol": "TCP", "port": 5601, "source": "public" },
+        { "protocol": "TCP", "port": 9200, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "-1", "port": 0, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "logstash-sg",
+      "vpc": "tf-vpc",
+      "description": "Security group for Logstash",
+      "ingress": [
+        { "protocol": "TCP", "port": 5044, "source": "public" },
+        { "protocol": "TCP", "port": 9600, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "TCP", "port": 9200, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "filebeat-sg",
+      "vpc": "tf-vpc",
+      "description": "Security group for Filebeat",
+      "ingress": [{ "protocol": "-1", "port": 0, "source": "internal" }],
+      "egress": [
+        { "protocol": "TCP", "port": 5044, "destination": "public" },
+        { "protocol": "TCP", "port": 9200, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "wordpress-sg",
+      "vpc": "tf-vpc",
+      "description": "Security group for WordPress",
+      "ingress": [
+        { "protocol": "TCP", "port": 80, "source": "public" },
+        { "protocol": "TCP", "port": 443, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "-1", "port": 0, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    }
+  ],
+
+  "efs": [
+    {
+      "creation_token": "my_efs",
+      "encrypted": false,
+      "lifecycle_policy": {
+        "transition_to_ia": "AFTER_30_DAYS"
+      },
+      "tags": {
+        "Name": "MyEfs"
+      },
+      "mount_targets": [
+        {
+          "subnet": "public-subnet-a",
+          "security_groups": ["test-sg"]
+        },
+        {
+          "subnet": "public-subnet-b",
+          "security_groups": ["test-sg"]
+        }
+      ]
+    }
+  ],
+
+  "asg": [
+    {
+      "name": "tf-asg",
+      "desired_capacity": 2,
+      "max_size": 3,
+      "min_size": 1,
+      "force_delete": true,
+      "subnets": ["public-subnet-a", "public-subnet-b"],
+      "target_groups": ["tf-tg-task1"],
+      "launch_template": {
+        "name": "tf-launch_template",
+        "instance_type": "t3.small",
+        "security_groups": ["filebeat-sg", "wordpress-sg"],
+        "efs_name": "my_efs",
+        "db_name": "maindb"
+      }
+    }
+  ],
+
+  "vms": [
+    {
+      "name": "bastion",
+      "ami": "ami-0af9b40b1a16fe700",
+      "instance_type": "t2.micro",
+      "subnet": "public-subnet-a",
+      "security_groups": ["test-sg"],
+      "user_data": "",
+      "target_group": "",
+      "port": null
+    },
+    {
+      "name": "es-1",
+      "ami": "ami-0af9b40b1a16fe700",
+      "instance_type": "t3.medium",
+      "subnet": "private-subnet-a",
+      "security_groups": ["es-sg"],
+      "user_data": "elasticsearch.sh",
+      "target_group": "",
+      "port": null
+    },
+    {
+      "name": "es-2",
+      "ami": "ami-0af9b40b1a16fe700",
+      "instance_type": "t3.medium",
+      "subnet": "private-subnet-b",
+      "security_groups": ["es-sg"],
+      "user_data": "elasticsearch.sh",
+      "target_group": "",
+      "port": null
+    },
+    {
+      "name": "kibana",
+      "ami": "ami-0af9b40b1a16fe700",
+      "instance_type": "t3.small",
+      "subnet": "public-subnet-a",
+      "security_groups": ["kibana-sg"],
+      "user_data": "elasticsearch.sh",
+      "target_group": "tf-tg-task2",
+      "port": 8080
+    },
+    {
+      "name": "logstash",
+      "ami": "ami-0af9b40b1a16fe700",
+      "instance_type": "t3.small",
+      "subnet": "public-subnet-b",
+      "security_groups": ["logstash-sg"],
+      "user_data": "elasticsearch.sh",
+      "target_group": "",
+      "port": null
+    }
+  ],
+
+  "load_balancer": [
+    {
+      "name": "tf-alb-task1",
+      "internal": false,
+      "load_balancer_type": "application",
+      "vpc": "tf-vpc",
+      "protocol": "HTTP",
+      "port": 80,
+      "target_type": "instance",
+      "security_groups": ["test-sg"],
+      "subnets": ["public-subnet-a", "public-subnet-b"]
+    },
+    {
+      "name": "tf-alb-task2",
+      "internal": false,
+      "load_balancer_type": "application",
+      "vpc": "tf-vpc",
+      "protocol": "HTTP",
+      "port": 80,
+      "target_type": "instance",
+      "security_groups": ["test-sg"],
+      "subnets": ["public-subnet-a", "public-subnet-b"]
+    }
+  ],
+
+  "listener": [
+    {
+      "name": "tf-listener-ingress-http-task1",
+      "protocol": "HTTP",
+      "port": 80,
+      "load_balancer": "tf-alb-task1",
+      "default_action": {
+        "type": "redirect",
+        "redirect": {
+          "protocol": "HTTPS",
+          "port": 443,
+          "status_code": "HTTP_301"
+        }
+      }
+    },
+    {
+      "name": "tf-listener-ingress-https-task1",
+      "protocol": "HTTPS",
+      "port": 443,
+      "ssl_policy": "ELBSecurityPolicy-2016-08",
+      "load_balancer": "tf-alb-task1",
+      "default_action": {
+        "type": "forward",
+        "target_group": "tf-tg-task1"
+      }
+    },
+    {
+      "name": "tf-listener-ingress-http-task2",
+      "protocol": "HTTP",
+      "port": 80,
+      "load_balancer": "tf-alb-task2",
+      "default_action": {
+        "type": "redirect",
+        "redirect": {
+          "protocol": "HTTPS",
+          "port": 443,
+          "status_code": "HTTP_301"
+        }
+      }
+    },
+    {
+      "name": "tf-listener-ingress-https-task2",
+      "protocol": "HTTPS",
+      "port": 443,
+      "ssl_policy": "ELBSecurityPolicy-2016-08",
+      "load_balancer": "tf-alb-task2",
+      "default_action": {
+        "type": "forward",
+        "target_group": "tf-tg-task2"
+      }
+    }
+  ],
+
+  "target_group": [
+    {
+      "name": "tf-tg-task1",
+      "vpc": "tf-vpc",
+      "protocol": "HTTP",
+      "port": 80,
+      "target_type": "instance"
+    },
+    {
+      "name": "tf-tg-task2",
+      "vpc": "tf-vpc",
+      "protocol": "HTTP",
+      "port": 8080,
+      "target_type": "instance"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+- name: "Import Elasticsearch GPG key"
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  register: import_gpg
+  failed_when: import_gpg is failed
+  changed_when: import_gpg.changed
+
+- name: "Add Elasticsearch yum repository"
+  ansible.builtin.yum_repository:
+    name: elasticsearch
+    description: Elasticsearch repository
+    baseurl: https://artifacts.elastic.co/packages/8.x/yum
+    gpgcheck: yes
+    gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    enabled: yes
+    repo_gpgcheck: no
+  register: es_repo
+  failed_when: es_repo is failed
+  changed_when: es_repo.changed
+
+
+- name: "Install Logstash package"
+  ansible.builtin.yum:
+    name: logstash
+    state: latest
+    disable_gpg_check: no
+    update_cache: yes
+  register: logstash_pkg
+  failed_when: logstash_pkg is failed
+  changed_when: logstash_pkg.changed

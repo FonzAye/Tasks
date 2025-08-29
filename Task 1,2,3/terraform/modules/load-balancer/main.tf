@@ -95,7 +95,7 @@ data "aws_route53_zone" "this" {
 }
 
 # Create a Route 53 alias record pointing to ALB
-resource "aws_route53_record" "alb_alias" {
+resource "aws_route53_record" "alb_alias1" {
   zone_id = data.aws_route53_zone.this.zone_id
   name    = "fonz-ocg4.click" # or "www.mycoolapp.com"
   type    = "A"
@@ -103,6 +103,19 @@ resource "aws_route53_record" "alb_alias" {
   alias {
     name                   = aws_lb.this["tf-alb-task1"].dns_name
     zone_id                = aws_lb.this["tf-alb-task1"].zone_id
+    evaluate_target_health = true
+  }
+}
+
+# Create a Route 53 alias record pointing to ALB
+resource "aws_route53_record" "alb_alias2" {
+  zone_id = data.aws_route53_zone.this.zone_id
+  name    = "es-cluster.fonz-ocg4.click" # or "www.mycoolapp.com"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.this["tf-alb-task2"].dns_name
+    zone_id                = aws_lb.this["tf-alb-task2"].zone_id
     evaluate_target_health = true
   }
 }

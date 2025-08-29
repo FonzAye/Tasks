@@ -80,7 +80,7 @@
       "subnet": "public-subnet-a",
       "security_groups": ["test-sg"],
       "user_data": "elasticsearch.sh",
-      "target_group": "tf-tg",
+      "target_group": "tf-tg-task2",
       "port": 8080
     },
     {
@@ -97,7 +97,7 @@
 
     "load_balancer": [
     {
-      "name": "tf-alb",
+      "name": "tf-alb-task2",
       "internal": false,
       "load_balancer_type": "application",
       "vpc": "tf-vpc",
@@ -111,10 +111,10 @@
 
   "listener": [
     {
-      "name": "tf-listener-ingress-http",
+      "name": "tf-listener-ingress-http-task2",
       "protocol": "HTTP",
       "port": 80,
-      "load_balancer": "tf-alb",
+      "load_balancer": "tf-alb-task2",
       "default_action": {
         "type": "redirect",
         "redirect": {
@@ -125,21 +125,21 @@
       }
     },
     {
-      "name": "tf-listener-ingress-https",
+      "name": "tf-listener-ingress-https-task2",
       "protocol": "HTTPS",
       "port": 443,
       "ssl_policy": "ELBSecurityPolicy-2016-08",
-      "load_balancer": "tf-alb",
+      "load_balancer": "tf-alb-task2",
       "default_action": {
         "type": "forward",
-        "target_group": "tf-tg"
+        "target_group": "tf-tg-task2"
       }
     }
   ],
 
   "target_group": [
     {
-      "name": "tf-tg",
+      "name": "tf-tg-task2",
       "vpc": "tf-vpc",
       "protocol": "HTTP",
       "port": 8080,

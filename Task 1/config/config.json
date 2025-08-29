@@ -119,7 +119,7 @@
       "min_size": 1,
       "force_delete": true,
       "subnets": ["public-subnet-a", "public-subnet-b"],
-      "target_groups": ["tf-tg"],
+      "target_groups": ["tf-tg-task1"],
       "launch_template": {
         "name": "tf-launch_template",
         "instance_type": "t2.micro",
@@ -132,7 +132,7 @@
 
   "load_balancer": [
     {
-      "name": "tf-alb",
+      "name": "tf-alb-task1",
       "internal": false,
       "load_balancer_type": "application",
       "vpc": "tf-vpc",
@@ -146,10 +146,10 @@
 
   "listener": [
     {
-      "name": "tf-listener-ingress-http",
+      "name": "tf-listener-ingress-http-task1",
       "protocol": "HTTP",
       "port": 80,
-      "load_balancer": "tf-alb",
+      "load_balancer": "tf-alb-task1",
       "default_action": {
         "type": "redirect",
         "redirect": {
@@ -160,21 +160,21 @@
       }
     },
     {
-      "name": "tf-listener-ingress-https",
+      "name": "tf-listener-ingress-https-task1",
       "protocol": "HTTPS",
       "port": 443,
       "ssl_policy": "ELBSecurityPolicy-2016-08",
-      "load_balancer": "tf-alb",
+      "load_balancer": "tf-alb-task1",
       "default_action": {
         "type": "forward",
-        "target_group": "tf-tg"
+        "target_group": "tf-tg-task1"
       }
     }
   ],
 
   "target_group": [
     {
-      "name": "tf-tg",
+      "name": "tf-tg-task1",
       "vpc": "tf-vpc",
       "protocol": "HTTP",
       "port": 80,
