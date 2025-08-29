@@ -114,6 +114,19 @@ autorefresh=1
 type=rpm-md
 EOF
 
+# /etc/hosts - managed by Ansible ahaha
+cat > /etc/hosts <<EOF
+127.0.0.1 localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1       localhost6 localhost6.localdomain6
+
+${es_1_ip} ${es_1_dns} es-1
+${es_2_ip} ${es_2_dns} es-2
+${kibana_ip} ${kibana_dns} kibana
+${logstash_ip} ${logstash_dns} logstash filebeat
+EOF
+
+echo "[INFO] /etc/hosts updated"
+
 echo "Installing Filebeat..."
 
 yum install -y filebeat

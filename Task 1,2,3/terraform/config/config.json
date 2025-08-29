@@ -50,7 +50,7 @@
       "zone": ["eu-central-1a", "eu-central-1b"],
       "subnets": ["database-subnet-a", "database-subnet-b"],
       "port": 3306,
-      "security_groups": ["test-sg", "test-sg-2"]
+      "security_groups": ["test-sg"]
     }
   ],
 
@@ -74,11 +74,65 @@
       ]
     },
     {
-      "name": "test-sg-2",
+      "name": "es-sg",
       "vpc": "tf-vpc",
-      "description": "test",
+      "description": "Security group for ElasticSearch",
       "ingress": [
-        { "protocol": "-1", "port": 0, "source": "public" },
+        { "protocol": "TCP", "port": 9200, "source": "public" },
+        { "protocol": "TCP", "port": 9300, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "-1", "port": 0, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "kibana-sg",
+      "vpc": "tf-vpc",
+      "description": "Security group for Kibana",
+      "ingress": [
+        { "protocol": "TCP", "port": 5601, "source": "public" },
+        { "protocol": "TCP", "port": 9200, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "-1", "port": 0, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "logstash-sg",
+      "vpc": "tf-vpc",
+      "description": "Security group for Logstash",
+      "ingress": [
+        { "protocol": "TCP", "port": 5044, "source": "public" },
+        { "protocol": "TCP", "port": 9600, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "TCP", "port": 9200, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "filebeat-sg",
+      "vpc": "tf-vpc",
+      "description": "Security group for Filebeat",
+      "ingress": [{ "protocol": "-1", "port": 0, "source": "internal" }],
+      "egress": [
+        { "protocol": "TCP", "port": 5044, "destination": "public" },
+        { "protocol": "TCP", "port": 9200, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    },
+    {
+      "name": "wordpress-sg",
+      "vpc": "tf-vpc",
+      "description": "Security group for WordPress",
+      "ingress": [
+        { "protocol": "TCP", "port": 80, "source": "public" },
+        { "protocol": "TCP", "port": 443, "source": "public" },
         { "protocol": "-1", "port": 0, "source": "internal" }
       ],
       "egress": [
@@ -105,7 +159,7 @@
         },
         {
           "subnet": "public-subnet-b",
-          "security_groups": ["test-sg", "test-sg-2"]
+          "security_groups": ["test-sg"]
         }
       ]
     }
@@ -123,7 +177,7 @@
       "launch_template": {
         "name": "tf-launch_template",
         "instance_type": "t3.small",
-        "security_groups": ["test-sg"],
+        "security_groups": ["filebeat-sg", "wordpress-sg"],
         "efs_name": "my_efs",
         "db_name": "maindb"
       }
@@ -132,11 +186,21 @@
 
   "vms": [
     {
+      "name": "bastion",
+      "ami": "ami-0af9b40b1a16fe700",
+      "instance_type": "t2.micro",
+      "subnet": "public-subnet-a",
+      "security_groups": ["test-sg"],
+      "user_data": "",
+      "target_group": "",
+      "port": null
+    },
+    {
       "name": "es-1",
       "ami": "ami-0af9b40b1a16fe700",
       "instance_type": "t3.medium",
-      "subnet": "public-subnet-a",
-      "security_groups": ["test-sg"],
+      "subnet": "private-subnet-a",
+      "security_groups": ["es-sg"],
       "user_data": "elasticsearch.sh",
       "target_group": "",
       "port": null
@@ -145,8 +209,8 @@
       "name": "es-2",
       "ami": "ami-0af9b40b1a16fe700",
       "instance_type": "t3.medium",
-      "subnet": "public-subnet-a",
-      "security_groups": ["test-sg"],
+      "subnet": "private-subnet-b",
+      "security_groups": ["es-sg"],
       "user_data": "elasticsearch.sh",
       "target_group": "",
       "port": null
@@ -156,17 +220,17 @@
       "ami": "ami-0af9b40b1a16fe700",
       "instance_type": "t3.small",
       "subnet": "public-subnet-a",
-      "security_groups": ["test-sg"],
+      "security_groups": ["kibana-sg"],
       "user_data": "elasticsearch.sh",
       "target_group": "tf-tg-task2",
       "port": 8080
     },
     {
-      "name": "logstash/filebeat",
+      "name": "logstash",
       "ami": "ami-0af9b40b1a16fe700",
       "instance_type": "t3.small",
-      "subnet": "public-subnet-a",
-      "security_groups": ["test-sg"],
+      "subnet": "public-subnet-b",
+      "security_groups": ["logstash-sg"],
       "user_data": "elasticsearch.sh",
       "target_group": "",
       "port": null

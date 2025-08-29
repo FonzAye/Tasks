@@ -6,6 +6,7 @@ locals {
     private_ips      = module.vms.private_ips
     public_dns_names = module.vms.public_dns_names
     private_key_path = "~/.ssh/id_rsa"
+    bastion_ip       = module.vms.public_dns_names["bastion"]
   })
 }
 

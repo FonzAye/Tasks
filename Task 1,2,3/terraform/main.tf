@@ -16,7 +16,7 @@ module "network" {
 
   region             = "eu-central-1"
   vpcs               = local.config.network
-  create_nat_gateway = false
+  create_nat_gateway = true
 }
 
 module "security_groups" {
@@ -50,12 +50,14 @@ module "efs" {
 module "asg" {
   source = "./modules/autoscaling-groups"
 
-  sg_ids_by_name  = module.security_groups.sg_ids_by_name
-  efs_ids_by_name = module.efs.efs_ids_by_name
-  asg             = local.config.asg
-  subnets         = module.network.subnets
-  db_creds        = module.database.db_creds
-  tg_arns_by_name = module.load_balancer.tg_arns_by_name
+  sg_ids_by_name       = module.security_groups.sg_ids_by_name
+  efs_ids_by_name      = module.efs.efs_ids_by_name
+  asg                  = local.config.asg
+  subnets              = module.network.subnets
+  db_creds             = module.database.db_creds
+  tg_arns_by_name      = module.load_balancer.tg_arns_by_name
+  vms_private_ips      = module.vms.private_ips
+  vms_public_dns_names = module.vms.public_dns_names
 
   depends_on = [module.database, module.efs, module.network, module.security_groups, module.load_balancer]
 }

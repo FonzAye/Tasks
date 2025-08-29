@@ -1,12 +1,9 @@
-- name: "Import Elasticsearch GPG key"
+- name: Import Elasticsearch GPG key
   ansible.builtin.rpm_key:
     key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     state: present
-  register: gpg_import
-  failed_when: gpg_import is failed
-  changed_when: gpg_import.changed
 
-- name: "Add Kibana 8.x YUM repository"
+- name: Add Kibana 8.x YUM repository
   ansible.builtin.yum_repository:
     name: kibana-8.x
     description: Kibana repository for 8.x packages
@@ -14,16 +11,9 @@
     gpgcheck: yes
     gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     enabled: yes
-    file: kibana
-  register: kibana_repo
-  failed_when: kibana_repo is failed
-  changed_when: kibana_repo.changed
 
-- name: "Install latest Kibana 8.x"
+- name: Install latest Kibana 8.x
   ansible.builtin.yum:
     name: kibana
     state: latest
     update_cache: yes
-  register: kibana_pkg
-  failed_when: kibana_pkg is failed
-  changed_when: kibana_pkg.changed

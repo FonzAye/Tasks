@@ -37,5 +37,5 @@
   roles:
     - install_logstash
     - configure_logstash
-    - install_filebeat
-    - configure_filebeat
+    # - install_filebeat
+    # - configure_filebeat

@@ -18,7 +18,16 @@ resource "aws_launch_template" "this" {
     DB_NAME      = var.db_creds[each.value.launch_template.db_name].db_name,
     DB_USER      = var.db_creds[each.value.launch_template.db_name].username,
     DB_PASSWORD  = var.db_creds[each.value.launch_template.db_name].password,
-    efs_id       = var.efs_ids_by_name[each.value.launch_template.efs_name]
+    efs_id       = var.efs_ids_by_name[each.value.launch_template.efs_name],
+
+    es_1_ip      = var.vms_private_ips["es-1"],
+    es_1_dns     = var.vms_public_dns_names["es-1"],
+    es_2_ip      = var.vms_private_ips["es-2"],
+    es_2_dns     = var.vms_public_dns_names["es-2"],
+    kibana_ip    = var.vms_private_ips["kibana"],
+    kibana_dns   = var.vms_public_dns_names["kibana"],
+    logstash_ip  = var.vms_private_ips["logstash"],
+    logstash_dns = var.vms_public_dns_names["logstash"],
   }))
   iam_instance_profile {
     name = "ec2-instance-profile"
