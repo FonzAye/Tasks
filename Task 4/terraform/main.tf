@@ -27,11 +27,12 @@ module "security_groups" {
   vpc_ids_by_name  = module.network.vpc_ids_by_name
 }
 
-module "lambda" {
-  source = "./modules/lambda"
+module "database" {
+  source = "./modules/database"
 
-  lambdas = local.config.lambdas
+  dbs            = local.config.databases
+  subnets        = module.network.subnets
   sg_ids_by_name = module.security_groups.sg_ids_by_name
-  subnets = module.network.subnets
-  layers = local.config.layers
+
+  depends_on = [module.network, module.security_groups]
 }
