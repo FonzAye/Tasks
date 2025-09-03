@@ -2,7 +2,7 @@
 set -e
 
 # Install CloudWatch Agent and jq
-dnf install -y amazon-cloudwatch-agent jq
+dnf install -y amazon-cloudwatch-agent jq mariadb105
 
 # Copy our config file
 cp .platform/files/cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
