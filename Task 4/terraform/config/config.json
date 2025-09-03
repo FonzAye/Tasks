@@ -1,0 +1,59 @@
+{
+  "network": [
+    {
+      "name": "tf-vpc",
+      "vpc_cidr_block": "10.0.0.0/16",
+      "subnets": [
+        {
+          "name": "public-subnet-a",
+          "cidr_block": "10.0.1.0/24",
+          "availability_zone": "eu-central-1a"
+        },
+        {
+          "name": "public-subnet-b",
+          "cidr_block": "10.0.2.0/24",
+          "availability_zone": "eu-central-1b"
+        }
+      ]
+    }
+  ],
+
+  "networks": [
+    { "name": "public", "cidr": "0.0.0.0/0" },
+    { "name": "internal", "cidr": "10.0.0.0/16" }
+  ],
+
+  "security_groups": [
+    {
+      "name": "test-sg",
+      "vpc": "tf-vpc",
+      "description": "test",
+      "ingress": [
+        { "protocol": "-1", "port": 0, "source": "public" },
+        { "protocol": "-1", "port": 0, "source": "internal" }
+      ],
+      "egress": [
+        { "protocol": "-1", "port": 0, "destination": "public" },
+        { "protocol": "-1", "port": 0, "destination": "internal" }
+      ]
+    }
+  ],
+
+  "lambdas": [
+    {
+      "name": "task3-function",
+      "handler": "lambda_function.lambda_handler",
+      "runtime": "python3.12",
+      "subnets": ["public-subnet-a", "public-subnet-b"],
+      "security_groups": ["test-sg"],
+      "layers": ["requests-layer"]
+    }
+  ],
+
+  "layers": [
+    {
+      "name": "requests-layer",
+      "compatible_runtimes": ["python3.12"]
+    }
+  ]
+}
