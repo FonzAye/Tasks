@@ -83,3 +83,12 @@ module "vms" {
   subnets         = module.network.subnets
   tg_arns_by_name = module.load_balancer.tg_arns_by_name
 }
+
+module "lambda" {
+  source = "./modules/lambda"
+
+  lambdas = local.config.lambdas
+  sg_ids_by_name = module.security_groups.sg_ids_by_name
+  subnets = module.network.subnets
+  layers = local.config.layers
+}

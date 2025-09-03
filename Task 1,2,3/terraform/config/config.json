@@ -330,5 +330,23 @@
       "port": 8080,
       "target_type": "instance"
     }
+  ],
+
+    "lambdas": [
+    {
+      "name": "task3-function",
+      "handler": "lambda_function.lambda_handler",
+      "runtime": "python3.12",
+      "subnets": ["public-subnet-a", "public-subnet-b"],
+      "security_groups": ["test-sg"],
+      "layers": ["requests-layer"]
+    }
+  ],
+
+  "layers": [
+    {
+      "name": "requests-layer",
+      "compatible_runtimes": ["python3.12"]
+    }
   ]
 }
